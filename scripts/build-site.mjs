@@ -77,34 +77,39 @@ console.log(`Building site ${SITE_ID}${force ? ' (--force)' : ''}`);
 // Publishing a draft to a client's live domain is the expensive mistake here,
 // so the default path refuses anything not marked published. Checked before
 // the export so a blocked build does no work and touches no files.
-{
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false },
-  });
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
+});
 
-  const { data, error } = await supabase
-    .from('sites')
-    .select('status')
-    .eq('id', SITE_ID)
-    .single();
+const { data: site, error: statusError } = await supabase
+  .from('sites')
+  .select('status')
+  .eq('id', SITE_ID)
+  .single();
 
-  if (error) fail(`Could not read status for site ${SITE_ID}: ${error.message}`);
-
-  if (data.status !== 'published') {
-    if (!force) {
-      fail(
-        `Site ${SITE_ID} is '${data.status}', not 'published' — refusing to ` +
-          'build. Update status in Supabase or pass --force to override.',
-      );
-    }
-
-    console.warn(
-      `  ⚠ status is '${data.status}', not 'published' — building anyway (--force)`,
-    );
-  } else {
-    console.log('  status: published');
-  }
+if (statusError) {
+  fail(`Could not read status for site ${SITE_ID}: ${statusError.message}`);
 }
+
+if (site.status !== 'published') {
+  if (!force) {
+    fail(
+      `Site ${SITE_ID} is '${site.status}', not 'published' — refusing to ` +
+        'build. Update status in Supabase or pass --force to override.',
+    );
+  }
+
+  console.warn(
+    `  ⚠ status is '${site.status}', not 'published' — building anyway (--force)`,
+  );
+} else {
+  console.log('  status: published');
+}
+
+// Only a clean, unforced build of a published site counts as a publish. A
+// forced build is a preview of something not meant to be live, so it must
+// leave last_published_at alone.
+const isRealPublish = !force && site.status === 'published';
 
 // --- 2. Clear stale exports -------------------------------------------------
 
@@ -155,6 +160,27 @@ if (!existsSync(ASTRO_BIN)) {
 }
 
 run('astro build', process.execPath, [ASTRO_BIN, 'build'], SITE_BUILDER);
+
+// --- 5. Record the publish --------------------------------------------------
+
+// Only after the build actually succeeded — stamping earlier would record a
+// publish for a build that then failed and never shipped.
+if (isRealPublish) {
+  const publishedAt = new Date().toISOString();
+
+  const { error: stampError } = await supabase
+    .from('sites')
+    .update({ last_published_at: publishedAt })
+    .eq('id', SITE_ID);
+
+  if (stampError) {
+    fail(`Build succeeded but could not set last_published_at: ${stampError.message}`);
+  }
+
+  console.log(`  last_published_at set to ${publishedAt}`);
+} else if (force) {
+  console.log('  last_published_at unchanged (--force build)');
+}
 
 console.log(`\n✔ build:site complete — output in site-builder/dist\n`);
 }
