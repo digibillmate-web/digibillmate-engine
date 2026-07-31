@@ -68,6 +68,68 @@ export async function createClientRecord(input: ClientInput): Promise<ClientResu
   return { ok: true, clientId: data.id };
 }
 
+/**
+ * Deletes a client, but only once it owns no sites.
+ *
+ * sites.client_id cascades, so deleting a client with sites would take those
+ * sites and every block of content with them. That is never what someone
+ * clicking "delete client" means, so it is refused rather than confirmed —
+ * the site deletions have their own confirmation for a reason.
+ */
+export async function deleteClientRecord(
+  clientId: string,
+  confirmName: string,
+): Promise<ClientResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Not signed in.' };
+
+  const { data: client, error: readError } = await supabase
+    .from('clients')
+    .select('id, name')
+    .eq('id', clientId)
+    .single();
+
+  if (readError || !client) {
+    return { ok: false, error: 'Client not found, or not visible to your account.' };
+  }
+
+  // Re-checked here rather than trusting the count the page rendered, which
+  // may be minutes stale.
+  const { data: sites, error: sitesError } = await supabase
+    .from('sites')
+    .select('name')
+    .eq('client_id', clientId);
+
+  if (sitesError) return { ok: false, error: sitesError.message };
+
+  if (sites && sites.length > 0) {
+    const names = sites.map((s) => s.name).join(', ');
+    return {
+      ok: false,
+      error:
+        `${client.name} still owns ${sites.length} site${sites.length === 1 ? '' : 's'}: ${names}. ` +
+        'Delete or reassign them first — deleting the client would take them with it.',
+    };
+  }
+
+  if (confirmName.trim() !== client.name) {
+    return { ok: false, error: 'The name you typed does not match this client.' };
+  }
+
+  const { data, error } = await supabase.from('clients').delete().eq('id', clientId).select('id');
+
+  if (error) return { ok: false, error: error.message };
+  if (!data || data.length === 0) {
+    return { ok: false, error: 'Nothing was deleted — your account may lack admin rights.' };
+  }
+
+  revalidatePath('/clients');
+  return { ok: true, clientId };
+}
+
 export async function updateClientRecord(
   clientId: string,
   input: ClientInput,

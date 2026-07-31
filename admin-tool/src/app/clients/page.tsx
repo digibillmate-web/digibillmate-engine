@@ -12,20 +12,20 @@ export default async function ClientsPage() {
       .from('clients')
       .select('id, name, business_type, contact_name, contact_email, contact_phone, notes')
       .order('name'),
-    // Site counts come from one extra read rather than an embedded aggregate,
-    // which PostgREST only exposes awkwardly.
-    supabase.from('sites').select('client_id'),
+    // Names, not just counts: deletion is blocked while a client owns sites,
+    // and naming them is more useful than saying "3".
+    supabase.from('sites').select('client_id, name').order('name'),
   ]);
 
-  const counts = new Map<string, number>();
+  const byClient = new Map<string, string[]>();
   for (const site of sites ?? []) {
     const key = site.client_id as string;
-    counts.set(key, (counts.get(key) ?? 0) + 1);
+    byClient.set(key, [...(byClient.get(key) ?? []), site.name as string]);
   }
 
   const rows: ClientWithSites[] = (clients ?? []).map((client) => ({
     ...client,
-    siteCount: counts.get(client.id) ?? 0,
+    siteNames: byClient.get(client.id) ?? [],
   }));
 
   return (

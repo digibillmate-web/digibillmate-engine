@@ -3,14 +3,16 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import ClientFormDialog, { type ClientRecord } from '@/components/ClientFormDialog';
+import DeleteClientDialog from '@/components/DeleteClientDialog';
 
 export interface ClientWithSites extends ClientRecord {
-  siteCount: number;
+  siteNames: string[];
 }
 
 export default function ClientsTable({ clients }: { clients: ClientWithSites[] }) {
   const [editing, setEditing] = useState<ClientRecord | null>(null);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<ClientWithSites | null>(null);
 
   return (
     <>
@@ -57,8 +59,10 @@ export default function ClientsTable({ clients }: { clients: ClientWithSites[] }
                   </td>
                   <td className="cell-muted">{client.contact_phone ?? '—'}</td>
                   <td className="cell-muted">
-                    {client.siteCount > 0 ? (
-                      <Link href="/sites">{client.siteCount}</Link>
+                    {client.siteNames.length > 0 ? (
+                      <Link href="/sites" title={client.siteNames.join(', ')}>
+                        {client.siteNames.length}
+                      </Link>
                     ) : (
                       '0'
                     )}
@@ -71,6 +75,18 @@ export default function ClientsTable({ clients }: { clients: ClientWithSites[] }
                         onClick={() => setEditing(client)}
                       >
                         Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--ghost btn--sm btn--danger-ghost"
+                        onClick={() => setDeleting(client)}
+                        title={
+                          client.siteNames.length > 0
+                            ? 'Owns sites — deletion is blocked, open to see which'
+                            : 'Permanently delete this client'
+                        }
+                      >
+                        Delete
                       </button>
                     </div>
                   </td>
@@ -88,6 +104,18 @@ export default function ClientsTable({ clients }: { clients: ClientWithSites[] }
         onClose={() => setEditing(null)}
         client={editing}
       />
+
+      {deleting && (
+        <DeleteClientDialog
+          open
+          onClose={() => setDeleting(null)}
+          client={{
+            id: deleting.id,
+            name: deleting.name,
+            siteNames: deleting.siteNames,
+          }}
+        />
+      )}
     </>
   );
 }

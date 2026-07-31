@@ -778,6 +778,17 @@ table.data tbody tr:hover {
   border-color: #f5c6c0;
 }
 
+.blocklist {
+  margin: 0 0 1rem;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: var(--admin-text);
+}
+
+.blocklist li {
+  margin-bottom: 0.2rem;
+}
+
 tr:has(.badge--archived) .cell-name a {
   opacity: 0.65;
 }
