@@ -251,7 +251,7 @@ async function main() {
 
   if (siteError) fail(`Could not load site ${siteId}: ${siteError.message}`);
 
-  // --- Archetype (theme defaults, and composition when linked) --------------
+  // --- Archetype (theme defaults only) --------------------------------------
 
   let archetype = null;
   if (site.archetype_id) {
@@ -272,45 +272,40 @@ async function main() {
 
   // --- Blocks ---------------------------------------------------------------
 
-  let blocks;
+  // Always block_instances, never archetype_blocks. The archetype supplies a
+  // site's *starting* composition (copied into block_instances once, by
+  // migration), but the rendered site is whatever its own instances say — that
+  // is the only table the admin portal writes to. Reading the archetype at
+  // build time would silently discard every edit made through the portal.
+  const { data: instanceRows, error: instanceError } = await supabase
+    .from('block_instances')
+    .select('position, content, content_draft, settings, block_definitions(key, name)')
+    .eq('site_id', site.id)
+    .order('position', { ascending: true });
 
-  if (site.composition_linked) {
-    // Composition is inherited: take the archetype's blocks and default content.
-    if (!archetype) fail('Site is composition_linked but has no archetype_id');
+  if (instanceError) fail(`Could not load block instances: ${instanceError.message}`);
 
-    const { data, error } = await supabase
-      .from('archetype_blocks')
-      .select('position, default_content, block_definitions(key, name)')
-      .eq('archetype_id', archetype.id)
-      .order('position', { ascending: true });
-
-    if (error) fail(`Could not load archetype blocks: ${error.message}`);
-
-    blocks = data.map((row) => ({
-      type: row.block_definitions?.key,
-      content: mapContent(row.block_definitions?.key, row.default_content),
-    }));
-  } else {
-    const { data, error } = await supabase
-      .from('block_instances')
-      .select('position, content, content_draft, settings, block_definitions(key, name)')
-      .eq('site_id', site.id)
-      .order('position', { ascending: true });
-
-    if (error) fail(`Could not load block instances: ${error.message}`);
-
-    blocks = data.map((row) => ({
-      type: row.block_definitions?.key,
-      // --draft previews unpublished edits; a null draft falls back to published.
-      content: mapContent(
-        row.block_definitions?.key,
-        (draft ? (row.content_draft ?? row.content) : row.content) ?? {},
-      ),
-      ...(row.settings && Object.keys(row.settings).length > 0
-        ? { settings: row.settings }
-        : {}),
-    }));
+  // An empty result means the site was never backfilled. Exporting zero blocks
+  // would build a blank page and report success, so refuse instead.
+  if (instanceRows.length === 0) {
+    fail(
+      `Site ${siteId} has no rows in block_instances — nothing to render. ` +
+        'A site created from an archetype needs its composition copied into ' +
+        'block_instances first (see supabase/migrations/0005_backfill_block_instances.sql).',
+    );
   }
+
+  const blocks = instanceRows.map((row) => ({
+    type: row.block_definitions?.key,
+    // --draft previews unpublished edits; a null draft falls back to published.
+    content: mapContent(
+      row.block_definitions?.key,
+      (draft ? (row.content_draft ?? row.content) : row.content) ?? {},
+    ),
+    ...(row.settings && Object.keys(row.settings).length > 0
+      ? { settings: row.settings }
+      : {}),
+  }));
 
   const unresolved = blocks.filter((block) => !block.type);
   if (unresolved.length > 0) {
