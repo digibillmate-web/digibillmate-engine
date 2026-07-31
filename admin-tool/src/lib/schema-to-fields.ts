@@ -132,6 +132,39 @@ export function schemaToFields(schema: unknown): Field[] {
 }
 
 /**
+ * A blank content object matching a schema, for a newly added block.
+ *
+ * Required scalars get an empty string rather than being omitted, so the form
+ * renders every field the schema promises instead of only the ones that
+ * happen to exist. Arrays start empty — an operator adds items deliberately.
+ */
+export function emptyContentFromSchema(schema: unknown): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+
+  for (const field of schemaToFields(schema)) {
+    out[field.name] = emptyValueForField(field);
+  }
+
+  return out;
+}
+
+function emptyValueForField(field: Field): unknown {
+  switch (field.kind) {
+    case 'object': {
+      const nested: Record<string, unknown> = {};
+      for (const child of field.fields ?? []) nested[child.name] = emptyValueForField(child);
+      return nested;
+    }
+    case 'array':
+      return [];
+    case 'boolean':
+      return false;
+    default:
+      return '';
+  }
+}
+
+/**
  * Keys present in stored content but absent from the schema. Surfacing these
  * matters: they are invisible to the form, so an unwitting save could drop
  * them.

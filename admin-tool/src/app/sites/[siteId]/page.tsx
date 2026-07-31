@@ -5,11 +5,18 @@ import AppHeader from '@/components/AppHeader';
 import SchemaForm from '@/components/SchemaForm';
 import PublishButton from '@/components/PublishButton';
 import DeployHookForm from '@/components/DeployHookForm';
+import ThemeForm from '@/components/ThemeForm';
+import BlockControls from '@/components/BlockControls';
+import AddBlockBar, { type CatalogEntry } from '@/components/AddBlockBar';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
+import { effectiveTheme } from '@/lib/theme';
 
 export const dynamic = 'force-dynamic';
 
+type Tab = 'content' | 'theme' | 'settings';
+
 interface BlockDefinition {
+  id: string;
   key: string;
   name: string;
   description: string | null;
@@ -22,47 +29,67 @@ interface InstanceRow {
   position: number;
   content: unknown;
   content_draft: unknown;
+  is_hidden: boolean;
   block_definitions: BlockDefinition | null;
 }
 
 export default async function SiteEditorPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ siteId: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { siteId } = await params;
-  const supabase = await createClient();
+  const { tab } = await searchParams;
+  const active: Tab = tab === 'theme' || tab === 'settings' ? tab : 'content';
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await createClient();
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, name, subdomain, status, archetypes(key, name)')
+    .select(
+      'id, name, subdomain, status, theme, composition_linked, theme_linked, archetypes(key, name, default_theme)',
+    )
     .eq('id', siteId)
     .single();
 
   if (!site) notFound();
 
-  // Admin-only table: a non-admin session simply gets no row back.
-  const { data: hook } = await supabase
-    .from('site_deploy_hooks')
-    .select('url')
-    .eq('site_id', siteId)
-    .maybeSingle();
+  const archetype = (
+    site as unknown as {
+      archetypes?: { key: string; name: string; default_theme: unknown } | null;
+    }
+  ).archetypes;
 
-  const { data, error } = await supabase
-    .from('block_instances')
-    .select(
-      'id, position, content, content_draft, block_definitions(key, name, description, schema, client_editable_fields)',
-    )
-    .eq('site_id', siteId)
-    .order('position', { ascending: true });
+  const [{ data: blockRows, error }, { data: hook }, { data: definitions }] = await Promise.all([
+    supabase
+      .from('block_instances')
+      .select(
+        'id, position, content, content_draft, is_hidden, block_definitions(id, key, name, description, schema, client_editable_fields)',
+      )
+      .eq('site_id', siteId)
+      .order('position', { ascending: true }),
+    // Admin-only table: a non-admin session simply gets no row back.
+    supabase.from('site_deploy_hooks').select('url').eq('site_id', siteId).maybeSingle(),
+    supabase.from('block_definitions').select('id, key, name').order('name'),
+  ]);
 
-  const blocks = (data ?? []) as unknown as InstanceRow[];
-  // PostgREST types an embedded one-to-one as an array; it is a single row here.
-  const archetype = (site as unknown as { archetypes?: { name: string } | null }).archetypes;
+  const blocks = (blockRows ?? []) as unknown as InstanceRow[];
+  const orderedIds = blocks.map((block) => block.id);
+  const usedDefinitionIds = new Set(blocks.map((b) => b.block_definitions?.id));
+
+  const catalog: CatalogEntry[] = (definitions ?? []).map((definition) => ({
+    id: definition.id,
+    key: definition.key,
+    name: definition.name,
+    inUse: usedDefinitionIds.has(definition.id),
+  }));
+
+  const hiddenCount = blocks.filter((block) => block.is_hidden).length;
+
+  const tabHref = (next: Tab) =>
+    next === 'content' ? `/sites/${siteId}` : `/sites/${siteId}?tab=${next}`;
 
   return (
     <>
@@ -76,17 +103,37 @@ export default async function SiteEditorPage({
         <h1 className="page-title">{site.name}</h1>
         <p className="page-subtitle">
           {archetype?.name ?? 'No archetype'} · {site.subdomain ?? 'no subdomain'} ·{' '}
-          <span className={`badge badge--${site.status}`}>{site.status}</span> · {blocks.length}{' '}
-          blocks
+          <span className={`badge badge--${site.status}`}>{site.status}</span>
         </p>
 
-        <PublishButton
-          siteId={siteId}
-          siteStatus={site.status}
-          hasDeployHook={Boolean(hook?.url)}
-        />
+        {/* Linked/forked is a real state change, so it is stated, not implied. */}
+        <div className="linkbadges">
+          <span className={`linkbadge ${site.composition_linked ? 'is-linked' : 'is-forked'}`}>
+            {site.composition_linked
+              ? `Composition linked to ${archetype?.name ?? 'archetype'}`
+              : 'Composition forked'}
+          </span>
+          <span className={`linkbadge ${site.theme_linked ? 'is-linked' : 'is-forked'}`}>
+            {site.theme_linked
+              ? `Theme linked to ${archetype?.name ?? 'archetype'}`
+              : 'Theme forked'}
+          </span>
+        </div>
 
-        <DeployHookForm siteId={siteId} initialUrl={hook?.url ?? ''} />
+        <nav className="tabs" aria-label="Site editor sections">
+          <Link className={`tab ${active === 'content' ? 'is-active' : ''}`} href={tabHref('content')}>
+            Content <span className="tab__count">{blocks.length}</span>
+          </Link>
+          <Link className={`tab ${active === 'theme' ? 'is-active' : ''}`} href={tabHref('theme')}>
+            Theme
+          </Link>
+          <Link
+            className={`tab ${active === 'settings' ? 'is-active' : ''}`}
+            href={tabHref('settings')}
+          >
+            Settings
+          </Link>
+        </nav>
 
         {error && (
           <div className="alert alert--error" role="alert">
@@ -94,47 +141,101 @@ export default async function SiteEditorPage({
           </div>
         )}
 
-        {blocks.length === 0 && !error && (
-          <div className="card empty">
-            This site has no rows in <code>block_instances</code>.
-          </div>
+        {active === 'theme' && (
+          <ThemeForm
+            siteId={siteId}
+            archetypeName={archetype?.name ?? 'archetype'}
+            themeLinked={Boolean(site.theme_linked)}
+            effective={effectiveTheme(
+              archetype?.default_theme,
+              site.theme,
+              Boolean(site.theme_linked),
+            )}
+          />
         )}
 
-        {blocks.map((block) => {
-          const definition = block.block_definitions;
-          const fields = schemaToFields(definition?.schema);
-          const unmapped = unmappedKeys(block.content, fields);
+        {active === 'settings' && (
+          <>
+            <PublishButton
+              siteId={siteId}
+              siteStatus={site.status}
+              hasDeployHook={Boolean(hook?.url)}
+            />
+            <DeployHookForm siteId={siteId} initialUrl={hook?.url ?? ''} />
+          </>
+        )}
 
-          return (
-            <section className="card block" key={block.id}>
-              <header className="block__head">
-                <span className="block__pos">{block.position}</span>
-                <div>
-                  <h2 className="block__name">{definition?.name ?? 'Unknown block'}</h2>
-                  <code className="block__key">{definition?.key ?? '—'}</code>
-                </div>
-                {block.content_draft ? <span className="badge badge--draft">draft pending</span> : null}
-              </header>
+        {active === 'content' && (
+          <>
+            <div className="card addblock-card">
+              <AddBlockBar siteId={siteId} catalog={catalog} />
+            </div>
 
-              <div className="block__body">
-                {definition ? (
-                  <SchemaForm
-                    siteId={siteId}
-                    blockId={block.id}
-                    blockKey={definition.key}
-                    fields={fields}
-                    initialContent={(block.content ?? {}) as Record<string, unknown>}
-                    unmapped={unmapped}
-                  />
-                ) : (
-                  <p className="cell-muted">
-                    No block definition joined — check the foreign key.
-                  </p>
-                )}
+            {hiddenCount > 0 && (
+              <div className="alert alert--info" role="status">
+                {hiddenCount} block{hiddenCount === 1 ? '' : 's'} hidden from the built site.
+                Content is kept — restore any of them below.
               </div>
-            </section>
-          );
-        })}
+            )}
+
+            {blocks.length === 0 && !error && (
+              <div className="card empty">
+                This site has no blocks. Add one above.
+              </div>
+            )}
+
+            {blocks.map((block) => {
+              const definition = block.block_definitions;
+              const fields = schemaToFields(definition?.schema);
+              const unmapped = unmappedKeys(block.content, fields);
+
+              return (
+                <section
+                  className={`card block ${block.is_hidden ? 'block--hidden' : ''}`}
+                  key={block.id}
+                >
+                  <header className="block__head">
+                    <span className="block__pos">{block.position}</span>
+                    <div>
+                      <h2 className="block__name">{definition?.name ?? 'Unknown block'}</h2>
+                      <code className="block__key">{definition?.key ?? '—'}</code>
+                    </div>
+
+                    {block.is_hidden && <span className="badge badge--archived">hidden</span>}
+                    {block.content_draft ? (
+                      <span className="badge badge--draft">draft pending</span>
+                    ) : null}
+
+                    <BlockControls
+                      siteId={siteId}
+                      blockId={block.id}
+                      blockName={definition?.name ?? 'this block'}
+                      isHidden={block.is_hidden}
+                      orderedIds={orderedIds}
+                    />
+                  </header>
+
+                  <div className="block__body">
+                    {definition ? (
+                      <SchemaForm
+                        siteId={siteId}
+                        blockId={block.id}
+                        blockKey={definition.key}
+                        fields={fields}
+                        initialContent={(block.content ?? {}) as Record<string, unknown>}
+                        unmapped={unmapped}
+                      />
+                    ) : (
+                      <p className="cell-muted">
+                        No block definition joined — check the foreign key.
+                      </p>
+                    )}
+                  </div>
+                </section>
+              );
+            })}
+          </>
+        )}
       </main>
     </>
   );

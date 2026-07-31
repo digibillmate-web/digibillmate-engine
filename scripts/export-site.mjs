@@ -277,10 +277,13 @@ async function main() {
   // migration), but the rendered site is whatever its own instances say — that
   // is the only table the admin portal writes to. Reading the archetype at
   // build time would silently discard every edit made through the portal.
+  // is_hidden blocks keep their content and position but are left out of the
+  // built site — that is the whole difference between hiding and deleting.
   const { data: instanceRows, error: instanceError } = await supabase
     .from('block_instances')
     .select('position, content, content_draft, settings, block_definitions(key, name)')
     .eq('site_id', site.id)
+    .eq('is_hidden', false)
     .order('position', { ascending: true });
 
   if (instanceError) fail(`Could not load block instances: ${instanceError.message}`);

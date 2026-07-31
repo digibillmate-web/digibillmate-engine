@@ -514,6 +514,236 @@ table.data tbody tr:hover {
   opacity: 0.85;
 }
 
+/* --- Linked/forked badges + tabs -------------------------------------- */
+
+.linkbadges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin: -0.75rem 0 1rem;
+}
+
+.linkbadge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.linkbadge.is-linked {
+  background: #eaf2fb;
+  color: #1b4a7a;
+  border-color: #c3d9ef;
+}
+
+.linkbadge.is-forked {
+  background: #fdf3e3;
+  color: #9a6412;
+  border-color: #f0dcb8;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--admin-border);
+  margin-bottom: 1.25rem;
+}
+
+.tab {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--admin-text);
+}
+
+.tab.is-active {
+  color: var(--admin-primary);
+  border-bottom-color: var(--admin-primary);
+}
+
+.tab__count {
+  display: inline-block;
+  margin-left: 0.3rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #eceff3;
+  font-size: 0.72rem;
+  color: var(--admin-text-muted);
+}
+
+/* --- Block composition controls --------------------------------------- */
+
+.addblock-card {
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.addblock__row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.addblock__row .ef__label {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.addblock__row select {
+  flex: 1;
+  min-width: 220px;
+}
+
+.blockctl {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
+.blockctl__error {
+  font-size: 0.72rem;
+  color: #8c1d13;
+  font-weight: 600;
+}
+
+.block--hidden {
+  opacity: 0.72;
+}
+
+.block--hidden .block__pos {
+  background: var(--admin-text-muted);
+}
+
+/* --- Theme editor ------------------------------------------------------ */
+
+.themegrid {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .themegrid {
+    grid-template-columns: 1.1fr 0.9fr;
+  }
+}
+
+.themegrid__form {
+  padding: 1.25rem;
+}
+
+.themegrid__preview {
+  position: sticky;
+  top: 1rem;
+}
+
+.themetoken__row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.themetoken__swatch {
+  width: 44px;
+  height: 38px;
+  padding: 2px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  cursor: pointer;
+}
+
+.themetoken__changed {
+  margin-left: 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #9a6412;
+  background: #fdf3e3;
+  border: 1px solid #f0dcb8;
+  border-radius: 999px;
+  padding: 0 0.4rem;
+}
+
+.themepreview__label {
+  margin: 0 0 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-text-muted);
+}
+
+.themepreview {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  overflow: hidden;
+  box-shadow: var(--admin-shadow);
+}
+
+.themepreview__bar {
+  height: 34px;
+}
+
+.themepreview__body {
+  padding: 1rem 1.1rem 1.25rem;
+}
+
+.themepreview__eyebrow {
+  margin: 0 0 0.3rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+
+.themepreview__btn {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.themepreview__footer {
+  padding: 0.6rem 1.1rem;
+  color: #fff;
+  opacity: 0.9;
+  font-size: 0.72rem;
+}
+
+.themepreview__legend {
+  margin: 0.75rem 0 0;
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+}
+
+.themepreview__legend > div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.themepreview__legend dt {
+  color: var(--admin-text-muted);
+  min-width: 6.5rem;
+}
+
+.themepreview__legend dd {
+  margin: 0;
+  font-weight: 600;
+}
+
 /* --- Row actions + modal ---------------------------------------------- */
 
 .rowactions {
