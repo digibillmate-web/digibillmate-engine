@@ -1,0 +1,48 @@
+---
+/**
+ * TEMPORARY — checkpoint 2 preview.
+ *
+ * Renders only the three structural blocks (header_nav,
+ * floating_contact_bar, footer) from the real export, so they can be
+ * reviewed before about_section / brand_logos / why_choose_us exist.
+ *
+ * Delete this file once every block in the archetype has a component and
+ * the index route renders the full page.
+ */
+import SiteLayout from '../layouts/SiteLayout.astro';
+import BlockRenderer from '../components/BlockRenderer.astro';
+import type { ExportedSite } from '../types/site';
+
+const exports = import.meta.glob<ExportedSite>('../data/sites/*.json', {
+  eager: true,
+  import: 'default',
+});
+
+const site = Object.values(exports)[0];
+if (!site) throw new Error('No site export found — run `npm run export:site -- <site_id>`.');
+
+const STRUCTURAL = ['floating_contact_bar', 'header_nav', 'footer'];
+const blocks = site.blocks.filter((block) => STRUCTURAL.includes(block.type));
+---
+
+<SiteLayout title={`${site.subdomain} — structural blocks`} theme={site.theme}>
+  <BlockRenderer blocks={blocks} />
+
+  <section class="dbm-section">
+    <div class="dbm-container">
+      <p class="note">
+        Checkpoint 2 preview — header, floating contact bar, and footer only.
+        The remaining blocks are rendered by the index route once their
+        components exist.
+      </p>
+    </div>
+  </section>
+</SiteLayout>
+
+<style>
+  .note {
+    color: var(--dbm-color-text-muted);
+    font-size: var(--dbm-text-sm);
+    margin: 0;
+  }
+</style>

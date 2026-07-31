@@ -1,0 +1,206 @@
+---
+import type { FooterContent } from '../../types/blocks';
+
+type Props = FooterContent;
+
+const {
+  businessName,
+  tagline,
+  servicesTitle = 'Services',
+  services,
+  quickLinksTitle = 'Quick Links',
+  quickLinks,
+  contactTitle = 'Get In Touch',
+  contact,
+  qr,
+  qrCaption,
+  copyright,
+} = Astro.props;
+
+const telHref = contact?.phone ? `tel:${contact.phone.replace(/[^+\d]/g, '')}` : undefined;
+---
+
+<footer class="footer">
+  <div class="dbm-container footer__inner">
+    <div class="footer__col footer__col--brand">
+      {businessName && <p class="footer__name">{businessName}</p>}
+      {tagline && <p class="footer__tagline">{tagline}</p>}
+      {qr && (
+        <figure class="footer__qr">
+          <img src={qr.src} alt={qr.alt} width="120" height="120" loading="lazy" />
+          {qrCaption && <figcaption>{qrCaption}</figcaption>}
+        </figure>
+      )}
+    </div>
+
+    {services && services.length > 0 && (
+      <nav class="footer__col" aria-label={servicesTitle}>
+        <h2 class="footer__heading">{servicesTitle}</h2>
+        <ul class="footer__list">
+          {services.map((item) => (
+            <li>
+              {item.href
+                ? <a class="footer__link" href={item.href}>{item.label}</a>
+                : <span class="footer__link">{item.label}</span>}
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )}
+
+    {quickLinks && quickLinks.length > 0 && (
+      <nav class="footer__col" aria-label={quickLinksTitle}>
+        <h2 class="footer__heading">{quickLinksTitle}</h2>
+        <ul class="footer__list">
+          {quickLinks.map((item) => (
+            <li>
+              {item.href
+                ? <a class="footer__link" href={item.href}>{item.label}</a>
+                : <span class="footer__link">{item.label}</span>}
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )}
+
+    {contact && (contact.phone || contact.email || contact.address) && (
+      <div class="footer__col">
+        <h2 class="footer__heading">{contactTitle}</h2>
+        <ul class="footer__list footer__list--contact">
+          {contact.phone && (
+            <li>
+              <span class="footer__icon" aria-hidden="true">📞</span>
+              <a class="footer__link" href={telHref}>{contact.phone}</a>
+            </li>
+          )}
+          {contact.email && (
+            <li>
+              <span class="footer__icon" aria-hidden="true">✉</span>
+              <a class="footer__link" href={`mailto:${contact.email}`}>{contact.email}</a>
+            </li>
+          )}
+          {contact.address && (
+            <li>
+              <span class="footer__icon" aria-hidden="true">📍</span>
+              <span class="footer__link">{contact.address}</span>
+            </li>
+          )}
+        </ul>
+      </div>
+    )}
+  </div>
+
+  {copyright && (
+    <div class="footer__bar">
+      <div class="dbm-container">
+        <p class="footer__copyright">{copyright}</p>
+      </div>
+    </div>
+  )}
+</footer>
+
+<style>
+  .footer {
+    background: var(--dbm-color-secondary);
+    color: var(--dbm-color-secondary-contrast);
+    /* Clears the mobile floating contact bar. */
+    padding-bottom: 56px;
+  }
+
+  .footer__inner {
+    display: grid;
+    gap: var(--dbm-space-xl);
+    padding-block: var(--dbm-section-y);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .footer__col--brand {
+    max-width: 32ch;
+  }
+
+  .footer__name {
+    font-family: var(--dbm-font-heading);
+    font-size: var(--dbm-text-xl);
+    font-weight: 700;
+    margin: 0 0 var(--dbm-space-xs);
+  }
+
+  .footer__tagline {
+    margin: 0 0 var(--dbm-space-md);
+    opacity: 0.75;
+    font-size: var(--dbm-text-sm);
+  }
+
+  .footer__qr {
+    margin: 0;
+  }
+
+  .footer__qr img {
+    background: var(--dbm-color-background);
+    border-radius: var(--dbm-radius-sm);
+    padding: 6px;
+  }
+
+  .footer__qr figcaption {
+    margin-top: var(--dbm-space-xs);
+    font-size: var(--dbm-text-sm);
+    opacity: 0.75;
+  }
+
+  .footer__heading {
+    font-family: var(--dbm-font-heading);
+    font-size: var(--dbm-text-base);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 var(--dbm-space-md);
+    padding-bottom: var(--dbm-space-xs);
+    border-bottom: 2px solid var(--dbm-color-primary);
+    display: inline-block;
+  }
+
+  .footer__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--dbm-space-xs);
+    font-size: var(--dbm-text-sm);
+  }
+
+  .footer__list--contact li {
+    display: flex;
+    gap: var(--dbm-space-xs);
+    align-items: start;
+  }
+
+  .footer__icon {
+    flex-shrink: 0;
+    opacity: 0.75;
+  }
+
+  .footer__link {
+    color: inherit;
+    text-decoration: none;
+    opacity: 0.85;
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+
+  a.footer__link:hover,
+  a.footer__link:focus-visible {
+    opacity: 1;
+    color: var(--dbm-color-primary);
+  }
+
+  .footer__bar {
+    border-top: 1px solid rgb(255 255 255 / 0.12);
+    padding-block: var(--dbm-space-md);
+  }
+
+  .footer__copyright {
+    margin: 0;
+    font-size: var(--dbm-text-sm);
+    opacity: 0.7;
+    text-align: center;
+  }
+</style>

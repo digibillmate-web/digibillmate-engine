@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Placeholder">
+  <rect width="640" height="420" fill="#d8dce2"/>
+  <path d="M170 250 h300 l-30 -70 h-240 z" fill="#aeb6c2"/>
+  <circle cx="225" cy="268" r="26" fill="#8d95a3"/>
+  <circle cx="415" cy="268" r="26" fill="#8d95a3"/>
+  <text x="320" y="360" font-family="system-ui, sans-serif" font-size="26" fill="#5c6470" text-anchor="middle">Service photo</text>
+</svg>

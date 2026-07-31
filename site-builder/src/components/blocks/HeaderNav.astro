@@ -1,0 +1,152 @@
+---
+import type { HeaderNavContent } from '../../types/blocks';
+
+type Props = HeaderNavContent;
+
+const { businessName, logo, navLinks, phone, cta } = Astro.props;
+
+const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : undefined;
+---
+
+<header class="header" id="top">
+  <div class="dbm-container header__inner">
+    <a class="header__brand" href="#top">
+      {logo
+        ? <img class="header__logo" src={logo.src} alt={logo.alt} width="200" height="56" />
+        : <span class="header__name">{businessName}</span>}
+    </a>
+
+    {navLinks && navLinks.length > 0 && (
+      <nav class="header__nav" aria-label="Primary">
+        <ul class="header__links">
+          {navLinks.map((link) => (
+            <li><a class="header__link" href={link.href}>{link.label}</a></li>
+          ))}
+        </ul>
+      </nav>
+    )}
+
+    <div class="header__actions">
+      {phone && (
+        <a class="header__phone" href={telHref}>
+          <span class="header__phone-icon" aria-hidden="true">📞</span>
+          <span class="header__phone-number">{phone}</span>
+        </a>
+      )}
+      {cta && <a class="dbm-btn dbm-btn--primary header__cta" href={cta.href}>{cta.label}</a>}
+    </div>
+  </div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--dbm-color-background);
+    border-bottom: 1px solid var(--dbm-color-border);
+    box-shadow: var(--dbm-shadow-sm);
+  }
+
+  .header__inner {
+    display: flex;
+    align-items: center;
+    gap: var(--dbm-space-md);
+    min-height: 72px;
+    flex-wrap: wrap;
+  }
+
+  .header__brand {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    flex-shrink: 0;
+  }
+
+  .header__logo {
+    height: 40px;
+    width: auto;
+  }
+
+  .header__name {
+    font-family: var(--dbm-font-heading);
+    font-size: var(--dbm-text-lg);
+    font-weight: 700;
+  }
+
+  .header__nav {
+    margin-inline: auto;
+  }
+
+  .header__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--dbm-space-md);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .header__link {
+    color: var(--dbm-color-text);
+    text-decoration: none;
+    font-size: var(--dbm-text-sm);
+    font-weight: 600;
+    padding-block: var(--dbm-space-xs);
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .header__link:hover,
+  .header__link:focus-visible {
+    color: var(--dbm-color-primary);
+    border-bottom-color: var(--dbm-color-primary);
+  }
+
+  .header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--dbm-space-sm);
+    margin-left: auto;
+  }
+
+  .header__phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    color: var(--dbm-color-text);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: var(--dbm-text-sm);
+    white-space: nowrap;
+  }
+
+  .header__phone:hover {
+    color: var(--dbm-color-primary);
+  }
+
+  .header__cta {
+    white-space: nowrap;
+  }
+
+  /* Below the fold of a phone screen the number is the priority, not the nav. */
+  @media (max-width: 767px) {
+    .header__nav {
+      order: 3;
+      width: 100%;
+      margin-inline: 0;
+      border-top: 1px solid var(--dbm-color-border);
+      padding-block: var(--dbm-space-xs);
+    }
+
+    .header__links {
+      gap: var(--dbm-space-sm);
+      justify-content: center;
+    }
+
+    .header__phone-number {
+      display: none;
+    }
+  }
+</style>

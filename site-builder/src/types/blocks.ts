@@ -19,6 +19,54 @@ export interface Cta {
   href: string;
 }
 
+export interface NavLink {
+  label: string;
+  href: string;
+}
+
+/** header_nav */
+export interface HeaderNavContent {
+  businessName: string;
+  logo?: Image;
+  navLinks?: NavLink[];
+  phone?: string;
+  cta?: Cta;
+}
+
+/** floating_contact_bar */
+export interface ContactChannel {
+  label: string;
+  url: string;
+}
+
+/** Channel keys are fixed so each can render its own icon; all are optional. */
+export interface FloatingContactBarContent {
+  call?: ContactChannel;
+  whatsapp?: ContactChannel;
+  facebook?: ContactChannel;
+  instagram?: ContactChannel;
+  youtube?: ContactChannel;
+}
+
+/** footer */
+export interface FooterContent {
+  businessName?: string;
+  tagline?: string;
+  servicesTitle?: string;
+  services?: NavLink[];
+  quickLinksTitle?: string;
+  quickLinks?: NavLink[];
+  contactTitle?: string;
+  contact?: {
+    phone?: string;
+    email?: string;
+    address?: string;
+  };
+  qr?: Image;
+  qrCaption?: string;
+  copyright?: string;
+}
+
 /** hero */
 export interface HeroContent {
   eyebrow?: string;
@@ -123,6 +171,9 @@ export interface ContactLocationContent {
 
 /** Discriminated union of every block instance the engine can render. */
 export type BlockContent =
+  | { type: 'header_nav'; content: HeaderNavContent }
+  | { type: 'floating_contact_bar'; content: FloatingContactBarContent }
+  | { type: 'footer'; content: FooterContent }
   | { type: 'hero'; content: HeroContent }
   | { type: 'services_grid'; content: ServicesGridContent }
   | { type: 'pricing_offers'; content: PricingOffersContent }

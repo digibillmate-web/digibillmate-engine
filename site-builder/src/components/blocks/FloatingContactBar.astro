@@ -1,0 +1,146 @@
+---
+import type { FloatingContactBarContent } from '../../types/blocks';
+
+type Props = FloatingContactBarContent;
+
+const { call, whatsapp, facebook, instagram, youtube } = Astro.props;
+
+/**
+ * Fixed channel order with a per-channel brand colour. Rendering is driven by
+ * this list rather than by iterating the props object, so the visual order
+ * stays stable no matter what order the keys arrive in from Supabase.
+ */
+const channels = [
+  { key: 'call', icon: '📞', channel: call },
+  { key: 'whatsapp', icon: '💬', channel: whatsapp },
+  { key: 'facebook', icon: 'f', channel: facebook },
+  { key: 'instagram', icon: '◎', channel: instagram },
+  { key: 'youtube', icon: '▶', channel: youtube },
+].filter((entry) => entry.channel?.url);
+---
+
+{
+  channels.length > 0 && (
+    <aside class="floatbar" aria-label="Contact us">
+      <ul class="floatbar__list">
+        {channels.map(({ key, icon, channel }) => (
+          <li>
+            <a
+              class={`floatbar__link floatbar__link--${key}`}
+              href={channel!.url}
+              title={channel!.label}
+              target={channel!.url.startsWith('http') ? '_blank' : undefined}
+              rel={channel!.url.startsWith('http') ? 'noopener noreferrer' : undefined}
+            >
+              <span class="floatbar__icon" aria-hidden="true">{icon}</span>
+              <span class="floatbar__label">{channel!.label}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  )
+}
+
+<style>
+  .floatbar {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 60;
+  }
+
+  .floatbar__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .floatbar__link {
+    display: flex;
+    align-items: center;
+    gap: var(--dbm-space-xs);
+    /* Collapsed to icon width; the label slides out on hover. */
+    width: 48px;
+    height: 48px;
+    padding-left: 14px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-decoration: none;
+    color: var(--dbm-color-primary-contrast);
+    background: var(--dbm-color-secondary);
+    border-radius: var(--dbm-radius-sm) 0 0 var(--dbm-radius-sm);
+    box-shadow: var(--dbm-shadow-sm);
+    transition: width 0.2s ease, background-color 0.2s ease;
+  }
+
+  .floatbar__link:hover,
+  .floatbar__link:focus-visible {
+    width: 160px;
+    background: var(--dbm-color-primary);
+  }
+
+  .floatbar__link--call {
+    background: var(--dbm-color-primary);
+  }
+
+  .floatbar__icon {
+    font-size: var(--dbm-text-lg);
+    line-height: 1;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  .floatbar__label {
+    font-size: var(--dbm-text-sm);
+    font-weight: 600;
+  }
+
+  /* On phones, sit along the bottom edge as a full-width action bar. */
+  @media (max-width: 767px) {
+    .floatbar {
+      top: auto;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      transform: none;
+    }
+
+    .floatbar__list {
+      flex-direction: row;
+      gap: 0;
+    }
+
+    /* The li is the flex child, so it carries the growth — not the link. */
+    .floatbar__list > li {
+      flex: 1;
+      display: flex;
+    }
+
+    .floatbar__link {
+      width: 100%;
+      justify-content: center;
+      padding-left: 0;
+      border-radius: 0;
+    }
+
+    .floatbar__link:hover,
+    .floatbar__link:focus-visible {
+      width: auto;
+    }
+
+    .floatbar__label {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .floatbar__link {
+      transition: none;
+    }
+  }
+</style>

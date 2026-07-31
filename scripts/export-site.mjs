@@ -74,6 +74,76 @@ function toCssVars(theme) {
  * so this file is the only place the two vocabularies meet.
  */
 const CONTENT_MAPPERS = {
+  header_nav: (c) => ({
+    businessName: c.business_name,
+    ...(c.logo_url
+      ? { logo: { src: c.logo_url, alt: c.logo_alt ?? c.business_name ?? '' } }
+      : {}),
+    navLinks: (c.nav_links ?? []).map((l) => ({ label: l.label, href: l.href })),
+    phone: c.phone,
+    ...(c.cta_label ? { cta: { label: c.cta_label, href: c.cta_href ?? '#contact' } } : {}),
+  }),
+
+  floating_contact_bar: (c) => {
+    // Pass through only the channels that actually carry a url.
+    const channel = (value) => (value?.url ? { label: value.label ?? '', url: value.url } : undefined);
+
+    return {
+      call: channel(c.call),
+      whatsapp: channel(c.whatsapp),
+      facebook: channel(c.facebook),
+      instagram: channel(c.instagram),
+      youtube: channel(c.youtube),
+    };
+  },
+
+  footer: (c) => ({
+    businessName: c.business_name,
+    tagline: c.tagline,
+    servicesTitle: c.services_title,
+    services: (c.services ?? []).map((s) => ({ label: s.label, href: s.href })),
+    quickLinksTitle: c.quick_links_title,
+    quickLinks: (c.quick_links ?? []).map((l) => ({ label: l.label, href: l.href })),
+    contactTitle: c.contact_title,
+    contact: c.contact,
+    ...(c.qr_image_url
+      ? { qr: { src: c.qr_image_url, alt: c.qr_caption ?? 'QR code' } }
+      : {}),
+    qrCaption: c.qr_caption,
+    copyright: c.copyright,
+  }),
+
+  // --- Mapped but not yet rendered ------------------------------------------
+  // These three have block definitions and seed content in Supabase, but no
+  // Astro component yet. The mapper exists so the export completes; the
+  // renderer will still throw on them until the components land.
+
+  about_section: (c) => ({
+    heading: c.heading,
+    body: c.body,
+    ...(c.image_url ? { image: { src: c.image_url, alt: c.image_alt ?? '' } } : {}),
+    ...(c.read_more_label
+      ? { readMore: { label: c.read_more_label, href: c.read_more_href ?? '#' } }
+      : {}),
+  }),
+
+  brand_logos: (c) => ({
+    heading: c.title,
+    brands: (c.brands ?? []).map((b) => ({
+      name: b.name,
+      ...(b.logo_url ? { logo: { src: b.logo_url, alt: b.name ?? '' } } : {}),
+    })),
+  }),
+
+  why_choose_us: (c) => ({
+    heading: c.title,
+    reasons: (c.reasons ?? []).map((r) => ({
+      icon: r.icon,
+      title: r.title,
+      description: r.description,
+    })),
+  }),
+
   hero: (c) => ({
     heading: c.headline,
     subheading: c.subheadline,
@@ -96,6 +166,9 @@ const CONTENT_MAPPERS = {
       title: s.name,
       description: s.description,
       icon: s.icon,
+      // Added by migration 0004; ServicesGrid does not render these yet.
+      ...(s.image_url ? { image: { src: s.image_url, alt: s.name ?? '' } } : {}),
+      price: s.price,
     })),
   }),
 
@@ -123,6 +196,8 @@ const CONTENT_MAPPERS = {
       quote: r.quote,
       author: r.author,
       rating: r.rating,
+      // Added by migration 0004; maps onto the avatar the component already has.
+      ...(r.photo_url ? { avatar: { src: r.photo_url, alt: r.author ?? '' } } : {}),
     })),
   }),
 
