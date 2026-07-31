@@ -67,6 +67,38 @@ export interface FooterContent {
   copyright?: string;
 }
 
+/** about_section */
+export interface AboutSectionContent {
+  heading: string;
+  body: string;
+  image?: Image;
+  readMore?: Cta;
+}
+
+/** brand_logos */
+export interface Brand {
+  name: string;
+  logo?: Image;
+}
+
+export interface BrandLogosContent {
+  heading?: string;
+  brands: Brand[];
+}
+
+/** why_choose_us */
+export interface Reason {
+  /** Icon slug from a small fixed set (shield, clock, rupee, wrench, …). */
+  icon?: string;
+  title: string;
+  description?: string;
+}
+
+export interface WhyChooseUsContent {
+  heading?: string;
+  reasons: Reason[];
+}
+
 /** hero */
 export interface HeroContent {
   eyebrow?: string;
@@ -81,15 +113,20 @@ export interface HeroContent {
 export interface Service {
   title: string;
   description?: string;
-  /** Icon slug or emoji; rendering is intentionally dumb for now. */
+  /** Icon slug or emoji; used only when the service has no image. */
   icon?: string;
   href?: string;
+  image?: Image;
+  /** Plain amount, no symbol — the component prepends the currency. */
+  price?: string | number;
 }
 
 export interface ServicesGridContent {
   heading: string;
   intro?: string;
   services: Service[];
+  /** Currency symbol prepended to service prices. Defaults to ₹. */
+  currency?: string;
 }
 
 /** pricing_offers */
@@ -174,6 +211,9 @@ export type BlockContent =
   | { type: 'header_nav'; content: HeaderNavContent }
   | { type: 'floating_contact_bar'; content: FloatingContactBarContent }
   | { type: 'footer'; content: FooterContent }
+  | { type: 'about_section'; content: AboutSectionContent }
+  | { type: 'brand_logos'; content: BrandLogosContent }
+  | { type: 'why_choose_us'; content: WhyChooseUsContent }
   | { type: 'hero'; content: HeroContent }
   | { type: 'services_grid'; content: ServicesGridContent }
   | { type: 'pricing_offers'; content: PricingOffersContent }

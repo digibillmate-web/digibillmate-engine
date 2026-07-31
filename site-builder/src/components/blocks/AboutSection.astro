@@ -1,0 +1,79 @@
+---
+import type { AboutSectionContent } from '../../types/blocks';
+
+type Props = AboutSectionContent;
+
+const { heading, body, image, readMore } = Astro.props;
+
+// Blank lines in the stored text become paragraphs.
+const paragraphs = body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+---
+
+<section class="about dbm-section" id="about">
+  <div class="dbm-container about__inner" class:list={[{ 'about__inner--split': image }]}>
+    {image && (
+      <div class="about__media">
+        <img src={image.src} alt={image.alt} loading="lazy" />
+      </div>
+    )}
+
+    <div class="about__body">
+      <h2 class="dbm-heading about__heading">{heading}</h2>
+      {paragraphs.map((paragraph) => <p class="about__text">{paragraph}</p>)}
+      {readMore && (
+        <a class="dbm-btn dbm-btn--secondary about__more" href={readMore.href}>
+          {readMore.label}
+        </a>
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  .about__inner--split {
+    display: grid;
+    gap: var(--dbm-space-xl);
+    align-items: center;
+  }
+
+  .about__media img {
+    width: 100%;
+    border-radius: var(--dbm-radius-lg);
+    box-shadow: var(--dbm-shadow-md);
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+
+  .about__heading {
+    position: relative;
+    padding-bottom: var(--dbm-space-sm);
+  }
+
+  /* Short accent rule under the heading, matching the footer treatment. */
+  .about__heading::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 56px;
+    height: 3px;
+    background: var(--dbm-color-primary);
+    border-radius: 2px;
+  }
+
+  .about__text {
+    color: var(--dbm-color-text-muted);
+    margin: 0 0 var(--dbm-space-md);
+    max-width: 62ch;
+  }
+
+  .about__more {
+    margin-top: var(--dbm-space-xs);
+  }
+
+  @media (min-width: 768px) {
+    .about__inner--split {
+      grid-template-columns: 1fr 1.1fr;
+    }
+  }
+</style>

@@ -3,23 +3,47 @@ import type { ServicesGridContent } from '../../types/blocks';
 
 type Props = ServicesGridContent;
 
-const { heading, intro, services } = Astro.props;
+const { heading, intro, services, currency = '₹' } = Astro.props;
+
+/**
+ * Stored prices are plain amounts ("2,499"); the symbol is presentation.
+ * Anything not starting with a digit ("Free", "POA") passes through as-is.
+ */
+function formatPrice(price: string | number): string {
+  const text = String(price).trim();
+  return /^\d/.test(text) ? `${currency}${text}` : text;
+}
 ---
 
-<section class="services dbm-section">
+<section class="services dbm-section" id="services">
   <div class="dbm-container">
     <h2 class="dbm-heading">{heading}</h2>
     {intro && <p class="dbm-intro">{intro}</p>}
     <ul class="services__grid">
       {services.map((service) => (
         <li class="services__card">
-          {service.icon && <span class="services__icon" aria-hidden="true">{service.icon}</span>}
-          <h3 class="services__title">
-            {service.href
-              ? <a class="services__link" href={service.href}>{service.title}</a>
-              : service.title}
-          </h3>
-          {service.description && <p class="services__desc">{service.description}</p>}
+          {service.image ? (
+            <div class="services__media">
+              <img src={service.image.src} alt={service.image.alt || service.title} loading="lazy" />
+            </div>
+          ) : service.icon ? (
+            <span class="services__icon" aria-hidden="true">{service.icon}</span>
+          ) : null}
+
+          <div class="services__body">
+            <h3 class="services__title">
+              {service.href
+                ? <a class="services__link" href={service.href}>{service.title}</a>
+                : service.title}
+            </h3>
+            {service.description && <p class="services__desc">{service.description}</p>}
+            {service.price !== undefined && service.price !== '' && (
+              <p class="services__price">
+                <span class="services__price-label">From</span>
+                <span class="services__price-amount">{formatPrice(service.price)}</span>
+              </p>
+            )}
+          </div>
         </li>
       ))}
     </ul>
@@ -33,22 +57,43 @@ const { heading, intro, services } = Astro.props;
     padding: 0;
     display: grid;
     gap: var(--dbm-space-md);
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   }
 
   .services__card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     background: var(--dbm-color-background);
     border: 1px solid var(--dbm-color-border);
     border-radius: var(--dbm-radius-md);
-    padding: var(--dbm-space-lg);
     box-shadow: var(--dbm-shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .services__card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--dbm-shadow-md);
+  }
+
+  .services__media img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
   }
 
   .services__icon {
     display: inline-block;
     font-size: var(--dbm-text-xl);
     line-height: 1;
-    margin-bottom: var(--dbm-space-sm);
+    padding: var(--dbm-space-lg) var(--dbm-space-lg) 0;
+  }
+
+  .services__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: var(--dbm-space-lg);
   }
 
   .services__title {
@@ -67,8 +112,37 @@ const { heading, intro, services } = Astro.props;
   }
 
   .services__desc {
-    margin: 0;
+    margin: 0 0 var(--dbm-space-md);
     color: var(--dbm-color-text-muted);
     font-size: var(--dbm-text-sm);
+  }
+
+  .services__price {
+    /* Pinned to the bottom so prices line up across cards of uneven height. */
+    margin: auto 0 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.4em;
+    padding-top: var(--dbm-space-sm);
+    border-top: 1px solid var(--dbm-color-border);
+  }
+
+  .services__price-label {
+    font-size: var(--dbm-text-sm);
+    color: var(--dbm-color-text-muted);
+  }
+
+  .services__price-amount {
+    font-size: var(--dbm-text-lg);
+    font-weight: 700;
+    color: var(--dbm-color-primary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .services__card,
+    .services__card:hover {
+      transition: none;
+      transform: none;
+    }
   }
 </style>

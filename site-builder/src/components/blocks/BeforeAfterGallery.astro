@@ -6,7 +6,7 @@ type Props = BeforeAfterGalleryContent;
 const { heading, intro, items } = Astro.props;
 ---
 
-<section class="gallery dbm-section">
+<section class="gallery dbm-section" id="gallery">
   <div class="dbm-container">
     <h2 class="dbm-heading">{heading}</h2>
     {intro && <p class="dbm-intro">{intro}</p>}

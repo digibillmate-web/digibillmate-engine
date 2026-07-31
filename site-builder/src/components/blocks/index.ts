@@ -7,6 +7,9 @@
 import HeaderNav from './HeaderNav.astro';
 import FloatingContactBar from './FloatingContactBar.astro';
 import Footer from './Footer.astro';
+import AboutSection from './AboutSection.astro';
+import BrandLogos from './BrandLogos.astro';
+import WhyChooseUs from './WhyChooseUs.astro';
 import Hero from './Hero.astro';
 import ServicesGrid from './ServicesGrid.astro';
 import PricingOffers from './PricingOffers.astro';
@@ -19,6 +22,9 @@ export const blockRegistry = {
   header_nav: HeaderNav,
   floating_contact_bar: FloatingContactBar,
   footer: Footer,
+  about_section: AboutSection,
+  brand_logos: BrandLogos,
+  why_choose_us: WhyChooseUs,
   hero: Hero,
   services_grid: ServicesGrid,
   pricing_offers: PricingOffers,
@@ -31,6 +37,9 @@ export {
   HeaderNav,
   FloatingContactBar,
   Footer,
+  AboutSection,
+  BrandLogos,
+  WhyChooseUs,
   Hero,
   ServicesGrid,
   PricingOffers,

@@ -1,0 +1,104 @@
+---
+import type { WhyChooseUsContent } from '../../types/blocks';
+
+type Props = WhyChooseUsContent;
+
+const { heading, reasons } = Astro.props;
+
+/**
+ * Stored icons are slugs, not glyphs, so the content stays presentation-free
+ * and an admin tool can offer a fixed picker. Unknown slugs fall back to a
+ * neutral mark rather than rendering the raw slug text.
+ */
+const ICONS: Record<string, string> = {
+  shield: '🛡',
+  clock: '🕑',
+  rupee: '₹',
+  wrench: '🔧',
+  star: '★',
+  check: '✓',
+  tools: '🛠',
+  car: '🚗',
+};
+
+const iconFor = (slug?: string) => (slug && ICONS[slug]) || '◆';
+---
+
+<section class="why dbm-section">
+  <div class="dbm-container">
+    {heading && <h2 class="dbm-heading why__heading">{heading}</h2>}
+    <ul class="why__grid">
+      {reasons.map((reason) => (
+        <li class="why__card">
+          <span class="why__icon" aria-hidden="true">{iconFor(reason.icon)}</span>
+          <h3 class="why__title">{reason.title}</h3>
+          {reason.description && <p class="why__desc">{reason.description}</p>}
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .why__heading {
+    text-align: center;
+  }
+
+  .why__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--dbm-space-md);
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  }
+
+  .why__card {
+    text-align: center;
+    background: var(--dbm-color-background);
+    border: 1px solid var(--dbm-color-border);
+    border-radius: var(--dbm-radius-md);
+    padding: var(--dbm-space-lg);
+    box-shadow: var(--dbm-shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .why__card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--dbm-shadow-md);
+  }
+
+  .why__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    margin-bottom: var(--dbm-space-sm);
+    border-radius: 50%;
+    background: var(--dbm-color-primary);
+    color: var(--dbm-color-primary-contrast);
+    font-size: var(--dbm-text-xl);
+    line-height: 1;
+  }
+
+  .why__title {
+    font-family: var(--dbm-font-heading);
+    font-size: var(--dbm-text-lg);
+    margin: 0 0 var(--dbm-space-xs);
+  }
+
+  .why__desc {
+    margin: 0;
+    color: var(--dbm-color-text-muted);
+    font-size: var(--dbm-text-sm);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .why__card,
+    .why__card:hover {
+      transition: none;
+      transform: none;
+    }
+  }
+</style>

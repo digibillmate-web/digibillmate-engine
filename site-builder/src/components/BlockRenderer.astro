@@ -3,10 +3,10 @@
  * Renders an ordered list of block instances by looking each one's type up in
  * the block registry.
  *
- * An unknown type is a hard error in dev — silently dropping a block hides a
- * real drift between `block_definitions.key` and this registry, which is
- * exactly the failure that is hardest to notice. In production it degrades to
- * a warning so one bad row can't take a live site down.
+ * An unknown type is a hard error in every mode, dev and production alike.
+ * Skipping it would let a green build publish a page silently missing a
+ * section — worse than not shipping at all, because nothing signals it.
+ * Drift between `block_definitions.key` and this registry must fail loudly.
  */
 import { blockRegistry } from './blocks/index';
 import type { BlockContent } from '../types/blocks';
@@ -24,14 +24,11 @@ const { blocks } = Astro.props;
 
     if (!Component) {
       const known = Object.keys(blockRegistry).join(', ');
-      const message =
+
+      throw new Error(
         `Unknown block type "${block.type}". No component is registered for it. ` +
-        `Registered keys (must match block_definitions.key): ${known}`;
-
-      if (import.meta.env.DEV) throw new Error(message);
-
-      console.warn(`[BlockRenderer] ${message} — skipping.`);
-      return null;
+          `Registered keys (must match block_definitions.key): ${known}`,
+      );
     }
 
     // Content shape is guaranteed by the BlockContent discriminated union.

@@ -6,7 +6,7 @@ type Props = TestimonialsContent;
 const { heading, intro, items } = Astro.props;
 ---
 
-<section class="testimonials dbm-section">
+<section class="testimonials dbm-section" id="testimonials">
   <div class="dbm-container">
     <h2 class="dbm-heading">{heading}</h2>
     {intro && <p class="dbm-intro">{intro}</p>}
@@ -78,8 +78,11 @@ const { heading, intro, items } = Astro.props;
   }
 
   .testimonials__avatar {
-    width: 44px;
-    height: 44px;
+    width: 56px;
+    height: 56px;
+    border: 2px solid var(--dbm-color-primary);
+    padding: 2px;
+    background: var(--dbm-color-background);
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
