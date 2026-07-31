@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import SignOutButton from '@/components/SignOutButton';
+import AppHeader from '@/components/AppHeader';
 import SiteRowActions from '@/components/SiteRowActions';
 
 export const dynamic = 'force-dynamic';
@@ -38,10 +38,6 @@ export default async function SitesPage({
   const showArchived = archived === '1';
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   // Reads run as the signed-in user, so an account without an admin profile
   // simply sees nothing — RLS decides, not this component.
   const [{ data, error }, { data: clientRows }] = await Promise.all([
@@ -64,16 +60,7 @@ export default async function SitesPage({
 
   return (
     <>
-      <header className="app-header">
-        <div className="app-header__inner">
-          <Link className="app-header__brand" href="/sites">
-            DigiBillMate Admin
-          </Link>
-          <div className="app-header__spacer" />
-          <span className="app-header__user">{user?.email}</span>
-          <SignOutButton />
-        </div>
-      </header>
+      <AppHeader current="sites" />
 
       <main className="container">
         <div className="page-head">

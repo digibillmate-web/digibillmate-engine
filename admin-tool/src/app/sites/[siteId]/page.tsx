@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import SignOutButton from '@/components/SignOutButton';
+import AppHeader from '@/components/AppHeader';
 import SchemaForm from '@/components/SchemaForm';
 import PublishButton from '@/components/PublishButton';
 import DeployHookForm from '@/components/DeployHookForm';
@@ -66,16 +66,7 @@ export default async function SiteEditorPage({
 
   return (
     <>
-      <header className="app-header">
-        <div className="app-header__inner">
-          <Link className="app-header__brand" href="/sites">
-            DigiBillMate Admin
-          </Link>
-          <div className="app-header__spacer" />
-          <span className="app-header__user">{user?.email}</span>
-          <SignOutButton />
-        </div>
-      </header>
+      <AppHeader current="sites" />
 
       <main className="container">
         <p className="crumb">

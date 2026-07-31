@@ -57,6 +57,30 @@ a {
   color: var(--admin-text);
 }
 
+.app-nav {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.app-nav__link {
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--admin-radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  text-decoration: none;
+}
+
+.app-nav__link:hover {
+  background: #f2f4f7;
+  color: var(--admin-text);
+}
+
+.app-nav__link.is-current {
+  background: #f2f4f7;
+  color: var(--admin-primary);
+}
+
 .app-header__spacer {
   margin-left: auto;
 }

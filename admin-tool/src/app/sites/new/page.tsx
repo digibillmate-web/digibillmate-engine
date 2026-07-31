@@ -1,16 +1,12 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import SignOutButton from '@/components/SignOutButton';
+import AppHeader from '@/components/AppHeader';
 import NewSiteForm from './NewSiteForm';
 
 export const dynamic = 'force-dynamic';
 
 export default async function NewSitePage() {
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   const [{ data: clients }, { data: archetypes }] = await Promise.all([
     supabase.from('clients').select('id, name').order('name'),
@@ -36,16 +32,7 @@ export default async function NewSitePage() {
 
   return (
     <>
-      <header className="app-header">
-        <div className="app-header__inner">
-          <Link className="app-header__brand" href="/sites">
-            DigiBillMate Admin
-          </Link>
-          <div className="app-header__spacer" />
-          <span className="app-header__user">{user?.email}</span>
-          <SignOutButton />
-        </div>
-      </header>
+      <AppHeader current="sites" />
 
       <main className="container">
         <p className="crumb">
