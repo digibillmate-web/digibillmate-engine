@@ -50,6 +50,31 @@ psql "$DATABASE_URL" -f supabase/migrations/0001_init_schema.sql
 psql "$DATABASE_URL" -f supabase/migrations/0002_rls_policies.sql
 ```
 
+## Deployment (Cloudflare Pages)
+
+One Pages project builds exactly one site, identified by `SITE_ID`.
+
+| Setting | Value |
+| ------- | ----- |
+| Build command | `npm run build:site` |
+| Build output directory | `site-builder/dist` |
+| Root directory | *(repo root — leave blank)* |
+
+Environment variables to set on the project:
+
+| Variable | Read by | Required |
+| -------- | ------- | -------- |
+| `SITE_ID` | `scripts/build-site.mjs` | Yes — the site's uuid |
+| `SUPABASE_URL` | `scripts/export-site.mjs` | Yes |
+| `SUPABASE_SERVICE_ROLE_KEY` | `scripts/export-site.mjs` | Yes — secret, build-time only |
+| `NODE_VERSION` | Cloudflare | Yes — `22` or newer |
+| `SUPABASE_ANON_KEY` | `src/lib/supabase.ts` (currently unused) | No |
+
+`npm run build:site` exports the site from Supabase, then builds Astro. It exits
+non-zero if `SITE_ID` is unset, if any required Supabase variable is missing, or
+if the export fails — it never falls back to stale or fixture data. The export
+directory is cleared first, so a failed run leaves nothing behind to build.
+
 ## Migrations
 
 Migrations live in `supabase/migrations/` and are applied in filename order.

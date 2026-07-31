@@ -1,19 +1,41 @@
 ---
 /**
- * Renders the exported Maria Cars site from real Supabase data.
+ * Renders the one exported site this build is for.
  *
- * The JSON is produced by `npm run export:site -- <site_id>` at the repo root
- * and is gitignored — run the export before building. The fixture in
- * src/fixtures/ is kept only as a component-level reference.
+ * One Cloudflare Pages project builds exactly one site (SITE_ID), so
+ * src/data/sites/ must hold exactly one export. Anything else is ambiguous
+ * and fails the build rather than silently picking a file — building the
+ * wrong client's site is far worse than not building at all.
  */
 import SiteLayout from '../layouts/SiteLayout.astro';
 import BlockRenderer from '../components/BlockRenderer.astro';
 import type { ExportedSite } from '../types/site';
-import siteData from '../data/sites/mariacars.json';
 
-const site = siteData as ExportedSite;
+const exports = import.meta.glob<ExportedSite>('../data/sites/*.json', {
+  eager: true,
+  import: 'default',
+});
+
+const found = Object.entries(exports);
+
+if (found.length === 0) {
+  throw new Error(
+    'No site export found in src/data/sites/. Run `npm run build:site` from the ' +
+      'repo root with SITE_ID set, or `npm run export:site -- <site_id>`.',
+  );
+}
+
+if (found.length > 1) {
+  throw new Error(
+    `Expected exactly one site export in src/data/sites/, found ${found.length}: ` +
+      `${found.map(([path]) => path).join(', ')}. One build renders one site — ` +
+      'remove the extras (`npm run build:site` clears the directory first).',
+  );
+}
+
+const [, site] = found[0]!;
 ---
 
-<SiteLayout title={`Maria Cars — ${site.subdomain}`} theme={site.theme}>
+<SiteLayout title={site.subdomain} theme={site.theme}>
   <BlockRenderer blocks={site.blocks} />
 </SiteLayout>
