@@ -3,7 +3,17 @@ import type { PricingOffersContent } from '../../types/blocks';
 
 type Props = PricingOffersContent;
 
-const { heading, intro, offers } = Astro.props;
+const { heading, intro, offers, currency = '₹' } = Astro.props;
+
+/**
+ * Stored prices are plain amounts ("2,499"). Prepend the symbol here so the
+ * data stays currency-agnostic — but pass through anything that already
+ * carries a non-numeric prefix (e.g. "Free", "$99", "POA") untouched.
+ */
+function formatPrice(price: string | number): string {
+  const text = String(price).trim();
+  return /^[\d]/.test(text) ? `${currency}${text}` : text;
+}
 ---
 
 <section class="offers dbm-section">
@@ -16,7 +26,7 @@ const { heading, intro, offers } = Astro.props;
           {offer.badge && <span class="offers__badge">{offer.badge}</span>}
           <h3 class="offers__name">{offer.name}</h3>
           <p class="offers__price">
-            <span class="offers__amount">{offer.price}</span>
+            <span class="offers__amount">{formatPrice(offer.price)}</span>
             {offer.priceNote && <span class="offers__note">{offer.priceNote}</span>}
           </p>
           {offer.description && <p class="offers__desc">{offer.description}</p>}

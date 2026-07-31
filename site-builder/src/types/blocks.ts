@@ -47,7 +47,8 @@ export interface ServicesGridContent {
 /** pricing_offers */
 export interface Offer {
   name: string;
-  price: string;
+  /** Plain amount, no symbol — the component prepends the currency. */
+  price: string | number;
   /** e.g. "per axle", "starting from" */
   priceNote?: string;
   description?: string;
@@ -62,6 +63,12 @@ export interface PricingOffersContent {
   heading: string;
   intro?: string;
   offers: Offer[];
+  /**
+   * Currency symbol prepended at render time. Defaults to ₹.
+   * Stored prices stay symbol-free so a future archetype can set its own
+   * without rewriting content.
+   */
+  currency?: string;
 }
 
 /** gallery */
