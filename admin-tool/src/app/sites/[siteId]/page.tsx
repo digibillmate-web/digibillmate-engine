@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import SignOutButton from '@/components/SignOutButton';
 import SchemaForm from '@/components/SchemaForm';
 import PublishButton from '@/components/PublishButton';
+import DeployHookForm from '@/components/DeployHookForm';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
 
 export const dynamic = 'force-dynamic';
@@ -38,11 +39,18 @@ export default async function SiteEditorPage({
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, name, subdomain, status, deploy_hook_url, archetypes(key, name)')
+    .select('id, name, subdomain, status, archetypes(key, name)')
     .eq('id', siteId)
     .single();
 
   if (!site) notFound();
+
+  // Admin-only table: a non-admin session simply gets no row back.
+  const { data: hook } = await supabase
+    .from('site_deploy_hooks')
+    .select('url')
+    .eq('site_id', siteId)
+    .maybeSingle();
 
   const { data, error } = await supabase
     .from('block_instances')
@@ -84,8 +92,10 @@ export default async function SiteEditorPage({
         <PublishButton
           siteId={siteId}
           siteStatus={site.status}
-          hasDeployHook={Boolean(site.deploy_hook_url)}
+          hasDeployHook={Boolean(hook?.url)}
         />
+
+        <DeployHookForm siteId={siteId} initialUrl={hook?.url ?? ''} />
 
         {error && (
           <div className="alert alert--error" role="alert">

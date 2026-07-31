@@ -4,11 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 /**
  * Triggers a Cloudflare Pages deploy for one site.
  *
- * The hook lives on the site row (sites.deploy_hook_url), not in an env var.
- * A deploy hook rebuilds one fixed Pages project and cannot be told which site
- * to build, so one hook per site is the only arrangement that stays correct as
- * sites are added — a single global hook would rebuild the wrong site while
- * reporting success.
+ * The hook lives in site_deploy_hooks, an admin-only table, not on the site
+ * row and not in an env var. A deploy hook rebuilds one fixed Pages project
+ * and cannot be told which site to build, so one hook per site is the only
+ * arrangement that stays correct as sites are added — a single global hook
+ * would rebuild the wrong site while reporting success.
  *
  * Deploy hooks are fire-and-forget. Cloudflare's response confirms only that
  * the trigger was accepted and queued — not that the build ran, succeeded, or
@@ -52,11 +52,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'siteId is required.' }, { status: 400 });
   }
 
-  // The hook is read under the caller's own session, so RLS governs access to
-  // it exactly as it governs the rest of the row.
   const { data: site, error: siteError } = await supabase
     .from('sites')
-    .select('id, name, subdomain, status, deploy_hook_url')
+    .select('id, name, subdomain, status')
     .eq('id', siteId)
     .single();
 
@@ -67,7 +65,15 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!site.deploy_hook_url) {
+  // Read under the caller's own session: site_deploy_hooks has an admin-only
+  // policy, so a non-admin gets no row rather than a hook they should not see.
+  const { data: hook } = await supabase
+    .from('site_deploy_hooks')
+    .select('url')
+    .eq('site_id', siteId)
+    .maybeSingle();
+
+  if (!hook?.url) {
     return NextResponse.json(
       {
         ok: false,
@@ -81,7 +87,7 @@ export async function POST(request: Request) {
 
   let response: Response;
   try {
-    response = await fetch(site.deploy_hook_url, { method: 'POST' });
+    response = await fetch(hook.url, { method: 'POST' });
   } catch (error) {
     return NextResponse.json(
       {
