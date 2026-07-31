@@ -1,0 +1,16 @@
+{
+  "name": "digibillmate-engine",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "DigiBillMate website builder engine — Supabase schema and build pipeline",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "export:site": "node --env-file-if-exists=.env scripts/export-site.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.58.0"
+  }
+}

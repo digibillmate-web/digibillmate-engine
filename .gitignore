@@ -23,6 +23,9 @@ build/
 .temp/
 supabase/.temp/
 
+# Generated site exports (rebuilt from Supabase by scripts/export-site.mjs)
+site-builder/src/data/sites/*.json
+
 # Editors / OS
 .DS_Store
 Thumbs.db

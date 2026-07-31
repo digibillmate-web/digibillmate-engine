@@ -1,7 +1,7 @@
 /**
  * Block registry: one entry per Block Definition.
  *
- * The key must match `block_definitions.slug` in Supabase. Renderers look a
+ * The key must match `block_definitions.key` in Supabase. Renderers look a
  * block instance's type up here to find the component that draws it.
  */
 import Hero from './Hero.astro';

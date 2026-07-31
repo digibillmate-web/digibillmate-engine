@@ -3,9 +3,10 @@
  *
  * These are the contract between Supabase (`block_instances.content`) and the
  * Astro components in `src/components/blocks/`. A block instance's stored JSON
- * must satisfy the matching interface below.
+ * must satisfy the matching interface below, and should validate against that
+ * definition's `block_definitions.schema`.
  *
- * Keep the `type` string in sync with `block_definitions.slug`.
+ * Keep the `type` string in sync with `block_definitions.key`.
  */
 
 export interface Image {
