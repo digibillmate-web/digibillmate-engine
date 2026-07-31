@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import SignOutButton from '@/components/SignOutButton';
+import SiteRowActions from '@/components/SiteRowActions';
 
 export const dynamic = 'force-dynamic';
 
 interface SiteRow {
   id: string;
+  client_id: string | null;
   name: string;
   subdomain: string | null;
   custom_domain: string | null;
@@ -36,14 +38,18 @@ export default async function SitesPage() {
 
   // Reads run as the signed-in user, so an account without an admin profile
   // simply sees nothing — RLS decides, not this component.
-  const { data, error } = await supabase
-    .from('sites')
-    .select(
-      'id, name, subdomain, custom_domain, status, composition_linked, theme_linked, last_published_at, archetypes(key, name)',
-    )
-    .order('name', { ascending: true });
+  const [{ data, error }, { data: clientRows }] = await Promise.all([
+    supabase
+      .from('sites')
+      .select(
+        'id, client_id, name, subdomain, custom_domain, status, composition_linked, theme_linked, last_published_at, archetypes(key, name)',
+      )
+      .order('name', { ascending: true }),
+    supabase.from('clients').select('id, name').order('name'),
+  ]);
 
   const sites = (data ?? []) as unknown as SiteRow[];
+  const clients = clientRows ?? [];
 
   return (
     <>
@@ -94,6 +100,7 @@ export default async function SitesPage() {
                   <th>Composition</th>
                   <th>Theme</th>
                   <th>Last published</th>
+                  <th aria-label="Actions" />
                 </tr>
               </thead>
               <tbody>
@@ -118,6 +125,17 @@ export default async function SitesPage() {
                       </span>
                     </td>
                     <td className="cell-muted">{formatDate(site.last_published_at)}</td>
+                    <td>
+                      <SiteRowActions
+                        site={{
+                          id: site.id,
+                          name: site.name,
+                          clientId: site.client_id,
+                          status: site.status,
+                        }}
+                        clients={clients}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
