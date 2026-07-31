@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "site-builder"],
       "port": 4321
+    },
+    {
+      "name": "admin-tool",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "admin-tool"],
+      "port": 3000
     }
   ]
 }

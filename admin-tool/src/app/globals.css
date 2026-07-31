@@ -1,0 +1,271 @@
+/* Admin portal chrome. Deliberately separate from the site-builder theme —
+   this is internal tooling, not a client-facing site. */
+
+:root {
+  --admin-bg: #f6f7f9;
+  --admin-surface: #ffffff;
+  --admin-border: #dfe3e8;
+  --admin-text: #16191d;
+  --admin-text-muted: #5c6470;
+  --admin-primary: #c0392b;
+  --admin-primary-contrast: #ffffff;
+  --admin-radius: 8px;
+  --admin-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+a {
+  color: var(--admin-primary);
+}
+
+.app-header {
+  background: var(--admin-surface);
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.app-header__inner {
+  max-width: 1180px;
+  margin-inline: auto;
+  padding: 0.9rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.app-header__brand {
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--admin-text);
+}
+
+.app-header__spacer {
+  margin-left: auto;
+}
+
+.app-header__user {
+  color: var(--admin-text-muted);
+  font-size: 0.875rem;
+}
+
+.container {
+  max-width: 1180px;
+  margin-inline: auto;
+  padding: 1.75rem 1.25rem 3rem;
+}
+
+.page-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.page-subtitle {
+  margin: 0 0 1.5rem;
+  color: var(--admin-text-muted);
+  font-size: 0.9rem;
+}
+
+.card {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow);
+}
+
+/* --- Table ---------------------------------------------------------- */
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+table.data th,
+table.data td {
+  text-align: left;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--admin-border);
+  white-space: nowrap;
+}
+
+table.data th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-text-muted);
+  background: #fafbfc;
+}
+
+table.data tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+table.data tbody tr:hover {
+  background: #fafbfc;
+}
+
+.cell-name {
+  font-weight: 600;
+}
+
+.cell-muted {
+  color: var(--admin-text-muted);
+}
+
+/* --- Badges --------------------------------------------------------- */
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.badge--published {
+  background: #e7f6ec;
+  color: #1a7f3c;
+  border-color: #bfe6cd;
+}
+
+.badge--draft {
+  background: #fdf3e3;
+  color: #9a6412;
+  border-color: #f0dcb8;
+}
+
+.badge--archived {
+  background: #eef0f3;
+  color: #5c6470;
+  border-color: #dfe3e8;
+}
+
+.flag {
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+}
+
+.flag--on {
+  color: #1a7f3c;
+}
+
+/* --- Forms / buttons ------------------------------------------------ */
+
+.btn {
+  display: inline-block;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--admin-radius);
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn--primary {
+  background: var(--admin-primary);
+  color: var(--admin-primary-contrast);
+}
+
+.btn--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--admin-border);
+  color: var(--admin-text);
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+  margin-bottom: 1rem;
+}
+
+.field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.field input {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  font: inherit;
+  background: var(--admin-surface);
+}
+
+.field input:focus-visible {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 1px;
+}
+
+.alert {
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--admin-radius);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.alert--error {
+  background: #fdecea;
+  color: #8c1d13;
+  border: 1px solid #f5c6c0;
+}
+
+.empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--admin-text-muted);
+}
+
+/* --- Login ---------------------------------------------------------- */
+
+.login-shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 1.75rem;
+}
+
+.login-card h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+}
+
+.login-card p.hint {
+  margin: 0 0 1.5rem;
+  color: var(--admin-text-muted);
+  font-size: 0.875rem;
+}
