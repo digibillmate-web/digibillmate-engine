@@ -1,0 +1,35 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Secrets / keys
+*.pem
+id_ed25519*
+id_rsa*
+*.key
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.next/
+
+# Supabase
+.branches/
+.temp/
+supabase/.temp/
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Logs
+logs/
+*.log
