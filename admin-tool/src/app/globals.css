@@ -496,6 +496,36 @@ table.data tbody tr:hover {
   display: flex;
   gap: 0.3rem;
   justify-content: flex-end;
+  align-items: center;
+}
+
+.rowactions__error {
+  font-size: 0.75rem;
+  color: #8c1d13;
+  font-weight: 600;
+}
+
+.btn--danger {
+  background: var(--admin-primary);
+  color: var(--admin-primary-contrast);
+}
+
+.btn--danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--danger-ghost:not(:disabled):hover {
+  border-color: var(--admin-primary);
+  color: var(--admin-primary);
+}
+
+.modal--danger {
+  border-color: #f5c6c0;
+}
+
+tr:has(.badge--archived) .cell-name a {
+  opacity: 0.65;
 }
 
 .modal {

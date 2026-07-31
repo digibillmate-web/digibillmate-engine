@@ -29,7 +29,13 @@ function formatDate(value: string | null) {
   });
 }
 
-export default async function SitesPage() {
+export default async function SitesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ archived?: string }>;
+}) {
+  const { archived } = await searchParams;
+  const showArchived = archived === '1';
   const supabase = await createClient();
 
   const {
@@ -48,8 +54,13 @@ export default async function SitesPage() {
     supabase.from('clients').select('id, name').order('name'),
   ]);
 
-  const sites = (data ?? []) as unknown as SiteRow[];
+  const allSites = (data ?? []) as unknown as SiteRow[];
   const clients = clientRows ?? [];
+
+  // Archived sites are retired, not deleted: hidden by default so the list
+  // reflects live work, but one click away rather than lost.
+  const archivedCount = allSites.filter((s) => s.status === 'archived').length;
+  const sites = showArchived ? allSites : allSites.filter((s) => s.status !== 'archived');
 
   return (
     <>
@@ -70,6 +81,16 @@ export default async function SitesPage() {
             <h1 className="page-title">Sites</h1>
             <p className="page-subtitle">
               {sites.length} {sites.length === 1 ? 'site' : 'sites'}
+              {archivedCount > 0 && (
+                <>
+                  {' · '}
+                  <Link href={showArchived ? '/sites' : '/sites?archived=1'}>
+                    {showArchived
+                      ? 'hide archived'
+                      : `show ${archivedCount} archived`}
+                  </Link>
+                </>
+              )}
             </p>
           </div>
           <Link className="btn btn--primary" href="/sites/new">
