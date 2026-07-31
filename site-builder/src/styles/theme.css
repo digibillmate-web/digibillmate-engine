@@ -1,0 +1,119 @@
+/**
+ * Theme layer.
+ *
+ * Every block component styles itself only through these custom properties, so
+ * an archetype's theme preset can be applied by overriding a handful of values
+ * on :root at build time — no component edits required.
+ */
+
+:root {
+  /* Color */
+  --dbm-color-bg: #ffffff;
+  --dbm-color-surface: #f5f6f8;
+  --dbm-color-border: #e2e5ea;
+  --dbm-color-text: #16191d;
+  --dbm-color-text-muted: #5c6470;
+  --dbm-color-primary: #c8102e;
+  --dbm-color-primary-contrast: #ffffff;
+  --dbm-color-accent: #16191d;
+  --dbm-color-accent-contrast: #ffffff;
+
+  /* Typography */
+  --dbm-font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --dbm-font-heading: var(--dbm-font-body);
+  --dbm-text-sm: 0.875rem;
+  --dbm-text-base: 1rem;
+  --dbm-text-lg: 1.125rem;
+  --dbm-text-xl: 1.5rem;
+  --dbm-text-2xl: 2rem;
+  --dbm-text-3xl: clamp(2.25rem, 5vw, 3.5rem);
+
+  /* Space */
+  --dbm-space-xs: 0.5rem;
+  --dbm-space-sm: 0.75rem;
+  --dbm-space-md: 1.25rem;
+  --dbm-space-lg: 2rem;
+  --dbm-space-xl: 3rem;
+  --dbm-section-y: clamp(3rem, 8vw, 5.5rem);
+
+  /* Shape */
+  --dbm-radius-sm: 6px;
+  --dbm-radius-md: 12px;
+  --dbm-radius-lg: 20px;
+  --dbm-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.06);
+  --dbm-shadow-md: 0 6px 24px rgb(0 0 0 / 0.08);
+
+  /* Layout */
+  --dbm-container: 1140px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--dbm-color-bg);
+  color: var(--dbm-color-text);
+  font-family: var(--dbm-font-body);
+  font-size: var(--dbm-text-base);
+  line-height: 1.6;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Shared primitives used by every block. */
+.dbm-section {
+  padding-block: var(--dbm-section-y);
+}
+
+.dbm-container {
+  width: 100%;
+  max-width: var(--dbm-container);
+  margin-inline: auto;
+  padding-inline: var(--dbm-space-md);
+}
+
+.dbm-heading {
+  font-family: var(--dbm-font-heading);
+  font-size: var(--dbm-text-2xl);
+  line-height: 1.2;
+  margin: 0 0 var(--dbm-space-sm);
+}
+
+.dbm-intro {
+  color: var(--dbm-color-text-muted);
+  max-width: 60ch;
+  margin: 0 0 var(--dbm-space-lg);
+}
+
+.dbm-btn {
+  display: inline-block;
+  padding: var(--dbm-space-sm) var(--dbm-space-lg);
+  border-radius: var(--dbm-radius-sm);
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: opacity 0.15s ease;
+}
+
+.dbm-btn:hover {
+  opacity: 0.88;
+}
+
+.dbm-btn--primary {
+  background: var(--dbm-color-primary);
+  color: var(--dbm-color-primary-contrast);
+}
+
+.dbm-btn--secondary {
+  background: transparent;
+  color: var(--dbm-color-text);
+  border-color: var(--dbm-color-border);
+}

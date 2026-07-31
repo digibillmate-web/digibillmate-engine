@@ -1,0 +1,33 @@
+---
+import '../styles/theme.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Theme preset from the site's archetype: CSS custom property overrides. */
+  theme?: Record<string, string>;
+}
+
+const { title, description, theme } = Astro.props;
+
+const themeStyle = theme
+  ? Object.entries(theme)
+      .map(([key, value]) => `${key}: ${value};`)
+      .join(' ')
+  : undefined;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    {themeStyle && <style is:inline set:html={`:root { ${themeStyle} }`}></style>}
+  </head>
+  <body>
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>

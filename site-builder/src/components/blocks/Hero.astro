@@ -1,0 +1,85 @@
+---
+import type { HeroContent } from '../../types/blocks';
+
+type Props = HeroContent;
+
+const { eyebrow, heading, subheading, image, primaryCta, secondaryCta } = Astro.props;
+---
+
+<section class="hero dbm-section">
+  <div class="dbm-container hero__inner" class:list={[{ 'hero__inner--split': image }]}>
+    <div class="hero__body">
+      {eyebrow && <p class="hero__eyebrow">{eyebrow}</p>}
+      <h1 class="hero__heading">{heading}</h1>
+      {subheading && <p class="hero__subheading">{subheading}</p>}
+      {(primaryCta || secondaryCta) && (
+        <div class="hero__actions">
+          {primaryCta && (
+            <a class="dbm-btn dbm-btn--primary" href={primaryCta.href}>{primaryCta.label}</a>
+          )}
+          {secondaryCta && (
+            <a class="dbm-btn dbm-btn--secondary" href={secondaryCta.href}>{secondaryCta.label}</a>
+          )}
+        </div>
+      )}
+    </div>
+    {image && (
+      <div class="hero__media">
+        <img src={image.src} alt={image.alt} loading="eager" />
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .hero {
+    background: var(--dbm-color-surface);
+  }
+
+  .hero__inner--split {
+    display: grid;
+    gap: var(--dbm-space-xl);
+    align-items: center;
+  }
+
+  .hero__eyebrow {
+    margin: 0 0 var(--dbm-space-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: var(--dbm-text-sm);
+    font-weight: 700;
+    color: var(--dbm-color-primary);
+  }
+
+  .hero__heading {
+    font-family: var(--dbm-font-heading);
+    font-size: var(--dbm-text-3xl);
+    line-height: 1.1;
+    margin: 0 0 var(--dbm-space-md);
+  }
+
+  .hero__subheading {
+    font-size: var(--dbm-text-lg);
+    color: var(--dbm-color-text-muted);
+    max-width: 55ch;
+    margin: 0 0 var(--dbm-space-lg);
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--dbm-space-sm);
+  }
+
+  .hero__media img {
+    width: 100%;
+    border-radius: var(--dbm-radius-lg);
+    box-shadow: var(--dbm-shadow-md);
+  }
+
+  @media (min-width: 768px) {
+    .hero__inner--split {
+      grid-template-columns: 1.1fr 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,25 @@
+---
+/**
+ * Development preview of the "Auto Service & Repair" archetype.
+ * Renders every block component from a fixture so layout and theming can be
+ * checked without Supabase. Real routes will feed BlockRenderer from exported
+ * site JSON instead.
+ */
+import SiteLayout from '../layouts/SiteLayout.astro';
+import BlockRenderer from '../components/BlockRenderer.astro';
+import { autoServiceBlocks } from '../fixtures/auto-service';
+
+// Example of what an archetype theme preset looks like in practice.
+const theme = {
+  '--dbm-color-primary': '#c8102e',
+  '--dbm-color-accent': '#16191d',
+};
+---
+
+<SiteLayout
+  title="Auto Service & Repair — block preview"
+  description="Development preview of the Auto Service & Repair archetype blocks."
+  theme={theme}
+>
+  <BlockRenderer blocks={autoServiceBlocks} />
+</SiteLayout>

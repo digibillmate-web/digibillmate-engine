@@ -1,0 +1,143 @@
+---
+import type { ContactLocationContent } from '../../types/blocks';
+
+type Props = ContactLocationContent;
+
+const { heading, intro, address, phone, email, hours, mapEmbedUrl, cta } = Astro.props;
+
+const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : undefined;
+---
+
+<section class="contact dbm-section">
+  <div class="dbm-container contact__inner" class:list={[{ 'contact__inner--split': mapEmbedUrl }]}>
+    <div class="contact__body">
+      <h2 class="dbm-heading">{heading}</h2>
+      {intro && <p class="dbm-intro">{intro}</p>}
+
+      <dl class="contact__details">
+        {address && (
+          <div class="contact__row">
+            <dt>Address</dt>
+            <dd>{address}</dd>
+          </div>
+        )}
+        {phone && (
+          <div class="contact__row">
+            <dt>Phone</dt>
+            <dd><a href={telHref}>{phone}</a></dd>
+          </div>
+        )}
+        {email && (
+          <div class="contact__row">
+            <dt>Email</dt>
+            <dd><a href={`mailto:${email}`}>{email}</a></dd>
+          </div>
+        )}
+      </dl>
+
+      {hours && hours.length > 0 && (
+        <table class="contact__hours">
+          <caption>Opening hours</caption>
+          <tbody>
+            {hours.map((slot) => (
+              <tr>
+                <th scope="row">{slot.days}</th>
+                <td>{slot.time}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {cta && <a class="dbm-btn dbm-btn--primary contact__cta" href={cta.href}>{cta.label}</a>}
+    </div>
+
+    {mapEmbedUrl && (
+      <div class="contact__map">
+        <iframe
+          src={mapEmbedUrl}
+          title={`Map showing the location of ${heading}`}
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .contact__inner--split {
+    display: grid;
+    gap: var(--dbm-space-xl);
+    align-items: start;
+  }
+
+  .contact__details {
+    margin: 0 0 var(--dbm-space-lg);
+  }
+
+  .contact__row {
+    display: flex;
+    gap: var(--dbm-space-sm);
+    padding-block: var(--dbm-space-xs);
+    border-bottom: 1px solid var(--dbm-color-border);
+  }
+
+  .contact__row dt {
+    flex: 0 0 6.5rem;
+    font-weight: 600;
+    color: var(--dbm-color-text-muted);
+    font-size: var(--dbm-text-sm);
+  }
+
+  .contact__row dd {
+    margin: 0;
+  }
+
+  .contact__row a {
+    color: var(--dbm-color-primary);
+    text-decoration: none;
+  }
+
+  .contact__row a:hover {
+    text-decoration: underline;
+  }
+
+  .contact__hours {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: var(--dbm-space-lg);
+    font-size: var(--dbm-text-sm);
+  }
+
+  .contact__hours caption {
+    text-align: left;
+    font-weight: 600;
+    color: var(--dbm-color-text-muted);
+    padding-bottom: var(--dbm-space-xs);
+  }
+
+  .contact__hours th {
+    text-align: left;
+    font-weight: 500;
+    padding-block: 0.3em;
+  }
+
+  .contact__hours td {
+    text-align: right;
+    padding-block: 0.3em;
+  }
+
+  .contact__map iframe {
+    width: 100%;
+    min-height: 340px;
+    border: 0;
+    border-radius: var(--dbm-radius-md);
+  }
+
+  @media (min-width: 768px) {
+    .contact__inner--split {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

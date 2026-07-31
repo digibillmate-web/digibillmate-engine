@@ -1,0 +1,136 @@
+---
+import type { PricingOffersContent } from '../../types/blocks';
+
+type Props = PricingOffersContent;
+
+const { heading, intro, offers } = Astro.props;
+---
+
+<section class="offers dbm-section">
+  <div class="dbm-container">
+    <h2 class="dbm-heading">{heading}</h2>
+    {intro && <p class="dbm-intro">{intro}</p>}
+    <ul class="offers__grid">
+      {offers.map((offer) => (
+        <li class="offers__card" class:list={[{ 'offers__card--featured': offer.featured }]}>
+          {offer.badge && <span class="offers__badge">{offer.badge}</span>}
+          <h3 class="offers__name">{offer.name}</h3>
+          <p class="offers__price">
+            <span class="offers__amount">{offer.price}</span>
+            {offer.priceNote && <span class="offers__note">{offer.priceNote}</span>}
+          </p>
+          {offer.description && <p class="offers__desc">{offer.description}</p>}
+          {offer.features && offer.features.length > 0 && (
+            <ul class="offers__features">
+              {offer.features.map((feature) => <li>{feature}</li>)}
+            </ul>
+          )}
+          {offer.cta && (
+            <a class="dbm-btn dbm-btn--primary offers__cta" href={offer.cta.href}>
+              {offer.cta.label}
+            </a>
+          )}
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .offers {
+    background: var(--dbm-color-surface);
+  }
+
+  .offers__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--dbm-space-md);
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .offers__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--dbm-color-bg);
+    border: 1px solid var(--dbm-color-border);
+    border-radius: var(--dbm-radius-md);
+    padding: var(--dbm-space-lg);
+  }
+
+  .offers__card--featured {
+    border-color: var(--dbm-color-primary);
+    box-shadow: var(--dbm-shadow-md);
+  }
+
+  .offers__badge {
+    position: absolute;
+    top: calc(var(--dbm-space-md) * -0.6);
+    left: var(--dbm-space-lg);
+    background: var(--dbm-color-primary);
+    color: var(--dbm-color-primary-contrast);
+    font-size: var(--dbm-text-sm);
+    font-weight: 700;
+    padding: 0.15rem var(--dbm-space-sm);
+    border-radius: var(--dbm-radius-sm);
+  }
+
+  .offers__name {
+    font-family: var(--dbm-font-heading);
+    font-size: var(--dbm-text-lg);
+    margin: 0 0 var(--dbm-space-xs);
+  }
+
+  .offers__price {
+    margin: 0 0 var(--dbm-space-sm);
+    display: flex;
+    align-items: baseline;
+    gap: var(--dbm-space-xs);
+    flex-wrap: wrap;
+  }
+
+  .offers__amount {
+    font-size: var(--dbm-text-2xl);
+    font-weight: 700;
+    color: var(--dbm-color-primary);
+    line-height: 1;
+  }
+
+  .offers__note,
+  .offers__desc {
+    color: var(--dbm-color-text-muted);
+    font-size: var(--dbm-text-sm);
+  }
+
+  .offers__desc {
+    margin: 0 0 var(--dbm-space-sm);
+  }
+
+  .offers__features {
+    list-style: none;
+    margin: 0 0 var(--dbm-space-lg);
+    padding: 0;
+    font-size: var(--dbm-text-sm);
+  }
+
+  .offers__features li {
+    padding-left: 1.4em;
+    position: relative;
+    margin-bottom: 0.35em;
+  }
+
+  .offers__features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--dbm-color-primary);
+    font-weight: 700;
+  }
+
+  .offers__cta {
+    margin-top: auto;
+    text-align: center;
+  }
+</style>

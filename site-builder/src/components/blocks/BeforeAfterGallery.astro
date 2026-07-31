@@ -1,0 +1,90 @@
+---
+import type { BeforeAfterGalleryContent } from '../../types/blocks';
+
+type Props = BeforeAfterGalleryContent;
+
+const { heading, intro, items } = Astro.props;
+---
+
+<section class="gallery dbm-section">
+  <div class="dbm-container">
+    <h2 class="dbm-heading">{heading}</h2>
+    {intro && <p class="dbm-intro">{intro}</p>}
+    <ul class="gallery__grid">
+      {items.map((item) => (
+        <li class="gallery__item">
+          <figure class="gallery__figure">
+            <div class="gallery__pair">
+              <div class="gallery__side">
+                <img src={item.before.src} alt={item.before.alt} loading="lazy" />
+                <span class="gallery__tag">Before</span>
+              </div>
+              <div class="gallery__side">
+                <img src={item.after.src} alt={item.after.alt} loading="lazy" />
+                <span class="gallery__tag gallery__tag--after">After</span>
+              </div>
+            </div>
+            {item.caption && <figcaption class="gallery__caption">{item.caption}</figcaption>}
+          </figure>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .gallery__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--dbm-space-lg);
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  .gallery__figure {
+    margin: 0;
+  }
+
+  .gallery__pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    border-radius: var(--dbm-radius-md);
+    overflow: hidden;
+    background: var(--dbm-color-border);
+  }
+
+  .gallery__side {
+    position: relative;
+  }
+
+  .gallery__side img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+
+  .gallery__tag {
+    position: absolute;
+    left: var(--dbm-space-xs);
+    bottom: var(--dbm-space-xs);
+    background: var(--dbm-color-accent);
+    color: var(--dbm-color-accent-contrast);
+    font-size: var(--dbm-text-sm);
+    font-weight: 600;
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--dbm-radius-sm);
+  }
+
+  .gallery__tag--after {
+    background: var(--dbm-color-primary);
+    color: var(--dbm-color-primary-contrast);
+  }
+
+  .gallery__caption {
+    margin-top: var(--dbm-space-sm);
+    color: var(--dbm-color-text-muted);
+    font-size: var(--dbm-text-sm);
+  }
+</style>

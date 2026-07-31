@@ -1,0 +1,25 @@
+---
+/**
+ * Renders an ordered list of block instances by looking each one's type up in
+ * the block registry. Unknown types are skipped rather than crashing the build,
+ * so a newer block definition in Supabase can't take a site down.
+ */
+import { blockRegistry } from './blocks/index';
+import type { BlockContent } from '../types/blocks';
+
+interface Props {
+  blocks: BlockContent[];
+}
+
+const { blocks } = Astro.props;
+---
+
+{
+  blocks.map((block) => {
+    const Component = blockRegistry[block.type];
+    if (!Component) return null;
+    // Content shape is guaranteed by the BlockContent discriminated union.
+    const Block = Component as any;
+    return <Block {...block.content} />;
+  })
+}

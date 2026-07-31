@@ -1,0 +1,74 @@
+---
+import type { ServicesGridContent } from '../../types/blocks';
+
+type Props = ServicesGridContent;
+
+const { heading, intro, services } = Astro.props;
+---
+
+<section class="services dbm-section">
+  <div class="dbm-container">
+    <h2 class="dbm-heading">{heading}</h2>
+    {intro && <p class="dbm-intro">{intro}</p>}
+    <ul class="services__grid">
+      {services.map((service) => (
+        <li class="services__card">
+          {service.icon && <span class="services__icon" aria-hidden="true">{service.icon}</span>}
+          <h3 class="services__title">
+            {service.href
+              ? <a class="services__link" href={service.href}>{service.title}</a>
+              : service.title}
+          </h3>
+          {service.description && <p class="services__desc">{service.description}</p>}
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .services__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--dbm-space-md);
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .services__card {
+    background: var(--dbm-color-bg);
+    border: 1px solid var(--dbm-color-border);
+    border-radius: var(--dbm-radius-md);
+    padding: var(--dbm-space-lg);
+    box-shadow: var(--dbm-shadow-sm);
+  }
+
+  .services__icon {
+    display: inline-block;
+    font-size: var(--dbm-text-xl);
+    line-height: 1;
+    margin-bottom: var(--dbm-space-sm);
+  }
+
+  .services__title {
+    font-family: var(--dbm-font-heading);
+    font-size: var(--dbm-text-lg);
+    margin: 0 0 var(--dbm-space-xs);
+  }
+
+  .services__link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .services__link:hover {
+    color: var(--dbm-color-primary);
+  }
+
+  .services__desc {
+    margin: 0;
+    color: var(--dbm-color-text-muted);
+    font-size: var(--dbm-text-sm);
+  }
+</style>

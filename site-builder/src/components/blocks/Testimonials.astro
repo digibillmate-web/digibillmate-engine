@@ -1,0 +1,98 @@
+---
+import type { TestimonialsContent } from '../../types/blocks';
+
+type Props = TestimonialsContent;
+
+const { heading, intro, items } = Astro.props;
+---
+
+<section class="testimonials dbm-section">
+  <div class="dbm-container">
+    <h2 class="dbm-heading">{heading}</h2>
+    {intro && <p class="dbm-intro">{intro}</p>}
+    <ul class="testimonials__grid">
+      {items.map((item) => (
+        <li class="testimonials__card">
+          {typeof item.rating === 'number' && (
+            <p class="testimonials__rating" aria-label={`${item.rating} out of 5`}>
+              <span aria-hidden="true">{'★'.repeat(Math.max(0, Math.min(5, Math.round(item.rating))))}</span>
+            </p>
+          )}
+          <blockquote class="testimonials__quote">{item.quote}</blockquote>
+          <div class="testimonials__author">
+            {item.avatar && (
+              <img class="testimonials__avatar" src={item.avatar.src} alt={item.avatar.alt} loading="lazy" />
+            )}
+            <div>
+              <p class="testimonials__name">{item.author}</p>
+              {item.role && <p class="testimonials__role">{item.role}</p>}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .testimonials {
+    background: var(--dbm-color-surface);
+  }
+
+  .testimonials__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--dbm-space-md);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .testimonials__card {
+    background: var(--dbm-color-bg);
+    border: 1px solid var(--dbm-color-border);
+    border-radius: var(--dbm-radius-md);
+    padding: var(--dbm-space-lg);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .testimonials__rating {
+    margin: 0 0 var(--dbm-space-xs);
+    color: var(--dbm-color-primary);
+    letter-spacing: 0.1em;
+  }
+
+  .testimonials__quote {
+    margin: 0 0 var(--dbm-space-lg);
+    padding: 0;
+    font-size: var(--dbm-text-lg);
+    line-height: 1.5;
+  }
+
+  .testimonials__author {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--dbm-space-sm);
+  }
+
+  .testimonials__avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .testimonials__name {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .testimonials__role {
+    margin: 0;
+    font-size: var(--dbm-text-sm);
+    color: var(--dbm-color-text-muted);
+  }
+</style>
