@@ -59,10 +59,17 @@ export default async function SitesPage() {
       </header>
 
       <main className="container">
-        <h1 className="page-title">Sites</h1>
-        <p className="page-subtitle">
-          {sites.length} {sites.length === 1 ? 'site' : 'sites'}
-        </p>
+        <div className="page-head">
+          <div>
+            <h1 className="page-title">Sites</h1>
+            <p className="page-subtitle">
+              {sites.length} {sites.length === 1 ? 'site' : 'sites'}
+            </p>
+          </div>
+          <Link className="btn btn--primary" href="/sites/new">
+            New site
+          </Link>
+        </div>
 
         {error && (
           <div className="alert alert--error" role="alert">

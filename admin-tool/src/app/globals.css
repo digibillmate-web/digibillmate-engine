@@ -83,6 +83,53 @@ a {
   font-size: 0.9rem;
 }
 
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-head > :last-child {
+  margin-left: auto;
+}
+
+.newsite {
+  padding: 1.25rem;
+}
+
+.newsite__modes {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.9rem;
+}
+
+.newsite__modes .ef--check {
+  margin-bottom: 0;
+}
+
+.newsite__grid {
+  display: grid;
+  gap: 0 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.newsite__hint {
+  margin: 0.3rem 0 0;
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+select.ef__input {
+  appearance: auto;
+}
+
+.ef__input--error {
+  border-color: var(--admin-primary);
+  outline: 2px solid rgb(192 57 43 / 0.25);
+}
+
 .card {
   background: var(--admin-surface);
   border: 1px solid var(--admin-border);
