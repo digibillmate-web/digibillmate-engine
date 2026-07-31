@@ -9,6 +9,7 @@
  * URL box with a live thumbnail.
  */
 import type { Field } from '@/lib/schema-to-fields';
+import ImageField from '@/components/fields/ImageField';
 
 /** A blank value matching a field's kind, for newly added array items. */
 export function emptyValueFor(field: Field): unknown {
@@ -39,11 +40,20 @@ interface Props {
    * block types, and every array item repeats its siblings' field names.
    */
   idPath: string;
+  /** "<siteId>/<blockKey>" — where uploads for this block are stored. */
+  uploadPrefix: string;
   /** Array items render without the outer label, which the list already shows. */
   hideLabel?: boolean;
 }
 
-export default function FieldInput({ field, value, onChange, idPath, hideLabel }: Props) {
+export default function FieldInput({
+  field,
+  value,
+  onChange,
+  idPath,
+  uploadPrefix,
+  hideLabel,
+}: Props) {
   const id = `f-${idPath.replace(/[^a-zA-Z0-9]+/g, '-')}`;
 
   const label = hideLabel ? null : (
@@ -69,6 +79,7 @@ export default function FieldInput({ field, value, onChange, idPath, hideLabel }
             field={child}
             value={obj[child.name]}
             idPath={`${idPath}-${child.name}`}
+            uploadPrefix={uploadPrefix}
             onChange={(next) => onChange({ ...obj, [child.name]: next })}
           />
         ))}
@@ -145,6 +156,7 @@ export default function FieldInput({ field, value, onChange, idPath, hideLabel }
                     field={child}
                     value={(item as Record<string, unknown>)?.[child.name]}
                     idPath={`${idPath}-${index}-${child.name}`}
+                    uploadPrefix={uploadPrefix}
                     onChange={(next) =>
                       replace(index, {
                         ...((item && typeof item === 'object' ? item : {}) as object),
@@ -158,6 +170,7 @@ export default function FieldInput({ field, value, onChange, idPath, hideLabel }
                   field={field.item!}
                   value={item}
                   idPath={`${idPath}-${index}`}
+                  uploadPrefix={uploadPrefix}
                   onChange={(next) => replace(index, next)}
                   hideLabel
                 />
@@ -179,22 +192,15 @@ export default function FieldInput({ field, value, onChange, idPath, hideLabel }
 
   // --- image --------------------------------------------------------------
   if (field.kind === 'image') {
-    const src = typeof value === 'string' ? value : '';
-
     return (
       <div className="ef ef--image">
         {label}
-        <div className="ef__image-row">
-          {src ? <img className="thumb" src={src} alt="" /> : <span className="thumb thumb--none" />}
-          <input
-            id={id}
-            type="text"
-            className="ef__input"
-            value={src}
-            placeholder="/placeholders/example.svg or https://…"
-            onChange={(e) => onChange(e.target.value)}
-          />
-        </div>
+        <ImageField
+          id={id}
+          value={typeof value === 'string' ? value : ''}
+          uploadPrefix={uploadPrefix}
+          onChange={onChange}
+        />
       </div>
     );
   }

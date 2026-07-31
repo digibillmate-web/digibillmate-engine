@@ -113,6 +113,7 @@ export default async function SiteEditorPage({
                   <SchemaForm
                     siteId={siteId}
                     blockId={block.id}
+                    blockKey={definition.key}
                     fields={fields}
                     initialContent={(block.content ?? {}) as Record<string, unknown>}
                     unmapped={unmapped}

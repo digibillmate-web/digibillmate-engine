@@ -18,6 +18,8 @@ type Content = Record<string, unknown>;
 interface Props {
   siteId: string;
   blockId: string;
+  /** block_definitions.key — groups this block's uploads in the bucket. */
+  blockKey: string;
   fields: Field[];
   initialContent: Content;
   unmapped: string[];
@@ -26,6 +28,7 @@ interface Props {
 export default function SchemaForm({
   siteId,
   blockId,
+  blockKey,
   fields,
   initialContent,
   unmapped,
@@ -79,6 +82,7 @@ export default function SchemaForm({
           field={field}
           value={content[field.name]}
           idPath={`${blockId}-${field.name}`}
+          uploadPrefix={`${siteId}/${blockKey}`}
           onChange={(next) => setKey(field.name, next)}
         />
       ))}
