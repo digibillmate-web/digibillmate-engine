@@ -106,10 +106,10 @@ if (site.status !== 'published') {
   console.log('  status: published');
 }
 
-// Only a clean, unforced build of a published site counts as a publish. A
-// forced build is a preview of something not meant to be live, so it must
-// leave last_published_at alone.
-const isRealPublish = !force && site.status === 'published';
+// The stamp reflects the site's actual status at build time, not how the
+// build was invoked. --force on an already-published site still ships live
+// content, so it counts; --force over a draft/archived status does not.
+const isRealPublish = site.status === 'published';
 
 // --- 2. Clear stale exports -------------------------------------------------
 
@@ -178,8 +178,8 @@ if (isRealPublish) {
   }
 
   console.log(`  last_published_at set to ${publishedAt}`);
-} else if (force) {
-  console.log('  last_published_at unchanged (--force build)');
+} else {
+  console.log(`  last_published_at unchanged (status is '${site.status}')`);
 }
 
 console.log(`\n✔ build:site complete — output in site-builder/dist\n`);
