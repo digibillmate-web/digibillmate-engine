@@ -8,15 +8,15 @@
 
 :root {
   /* Color */
-  --dbm-color-bg: #ffffff;
+  --dbm-color-background: #ffffff;
   --dbm-color-surface: #f5f6f8;
   --dbm-color-border: #e2e5ea;
   --dbm-color-text: #16191d;
   --dbm-color-text-muted: #5c6470;
   --dbm-color-primary: #c8102e;
   --dbm-color-primary-contrast: #ffffff;
-  --dbm-color-accent: #16191d;
-  --dbm-color-accent-contrast: #ffffff;
+  --dbm-color-secondary: #16191d;
+  --dbm-color-secondary-contrast: #ffffff;
 
   /* Typography */
   --dbm-font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -55,7 +55,7 @@
 
 body {
   margin: 0;
-  background: var(--dbm-color-bg);
+  background: var(--dbm-color-background);
   color: var(--dbm-color-text);
   font-family: var(--dbm-font-body);
   font-size: var(--dbm-text-base);

@@ -16,9 +16,9 @@ export const blockRegistry = {
   hero: Hero,
   services_grid: ServicesGrid,
   pricing_offers: PricingOffers,
-  before_after_gallery: BeforeAfterGallery,
+  gallery: BeforeAfterGallery,
   testimonials: Testimonials,
-  contact_location: ContactLocation,
+  contact: ContactLocation,
 } satisfies Record<BlockType, unknown>;
 
 export {

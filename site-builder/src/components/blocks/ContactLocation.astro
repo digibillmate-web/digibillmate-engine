@@ -6,6 +6,11 @@ type Props = ContactLocationContent;
 const { heading, intro, address, phone, email, hours, mapEmbedUrl, cta } = Astro.props;
 
 const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : undefined;
+
+// `hours` is free text in Supabase, but the admin tool may later store a
+// structured table. Support both.
+const hoursText = typeof hours === 'string' ? hours.trim() : undefined;
+const hoursRows = Array.isArray(hours) ? hours : undefined;
 ---
 
 <section class="contact dbm-section">
@@ -35,11 +40,18 @@ const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : undefined;
         )}
       </dl>
 
-      {hours && hours.length > 0 && (
+      {hoursText && (
+        <p class="contact__hours-text">
+          <span class="contact__hours-label">Opening hours</span>
+          {hoursText}
+        </p>
+      )}
+
+      {hoursRows && hoursRows.length > 0 && (
         <table class="contact__hours">
           <caption>Opening hours</caption>
           <tbody>
-            {hours.map((slot) => (
+            {hoursRows.map((slot) => (
               <tr>
                 <th scope="row">{slot.days}</th>
                 <td>{slot.time}</td>
@@ -101,6 +113,17 @@ const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : undefined;
 
   .contact__row a:hover {
     text-decoration: underline;
+  }
+
+  .contact__hours-text {
+    margin: 0 0 var(--dbm-space-lg);
+    font-size: var(--dbm-text-sm);
+  }
+
+  .contact__hours-label {
+    display: block;
+    font-weight: 600;
+    color: var(--dbm-color-text-muted);
   }
 
   .contact__hours {

@@ -1,148 +1,152 @@
--- 0002_rls_policies.sql
--- Row Level Security. Tenancy flows from clients.owner_id:
---   clients -> sites -> blocks
--- The service_role key bypasses RLS entirely and is unaffected by this file.
+-- ============================================================
+-- DigiBillMate Website Builder Engine
+-- Migration 0002: Row Level Security
+--
+-- Model:
+--  - 'admin' role (you two): full access to everything.
+--  - 'client' role (future): can only SEE their own client's
+--    sites/block_instances, and can only WRITE to
+--    block_instances.content_draft (never content directly,
+--    never composition, never theme, never other tables).
+--  - service_role key (used by server-side scripts, e.g. export
+--    pipeline) bypasses RLS entirely by design - never expose
+--    this key to any frontend.
+-- ============================================================
 
-alter table public.clients    enable row level security;
-alter table public.sites      enable row level security;
-alter table public.blocks     enable row level security;
-alter table public.archetypes enable row level security;
+-- Enable RLS on every table that holds business data
+alter table profiles enable row level security;
+alter table clients enable row level security;
+alter table block_definitions enable row level security;
+alter table archetypes enable row level security;
+alter table archetype_blocks enable row level security;
+alter table sites enable row level security;
+alter table block_instances enable row level security;
 
--- ---------------------------------------------------------------------------
--- Helper: does the current user own this client?
--- ---------------------------------------------------------------------------
-
-create or replace function public.owns_client(target_client_id uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
+-- ------------------------------------------------------------
+-- Helper: is the current user an admin?
+-- ------------------------------------------------------------
+create or replace function is_admin()
+returns boolean as $$
   select exists (
-    select 1
-    from public.clients c
-    where c.id = target_client_id
-      and c.owner_id = auth.uid()
+    select 1 from profiles
+    where id = auth.uid() and role = 'admin'
   );
-$$;
+$$ language sql stable security definer;
 
-create or replace function public.owns_site(target_site_id uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.sites s
-    join public.clients c on c.id = s.client_id
-    where s.id = target_site_id
-      and c.owner_id = auth.uid()
-  );
-$$;
+-- Helper: which client_id does the current user (if role='client') belong to?
+create or replace function current_client_id()
+returns uuid as $$
+  select client_id from profiles where id = auth.uid();
+$$ language sql stable security definer;
 
--- ---------------------------------------------------------------------------
--- clients
--- ---------------------------------------------------------------------------
+-- ------------------------------------------------------------
+-- PROFILES
+-- ------------------------------------------------------------
+create policy "admins manage all profiles"
+  on profiles for all
+  using (is_admin())
+  with check (is_admin());
 
-create policy "clients_select_own"
-  on public.clients for select
-  to authenticated
-  using (owner_id = auth.uid());
+create policy "users can read their own profile"
+  on profiles for select
+  using (id = auth.uid());
 
-create policy "clients_insert_own"
-  on public.clients for insert
-  to authenticated
-  with check (owner_id = auth.uid());
+-- ------------------------------------------------------------
+-- CLIENTS  (admin only for now - clients don't manage their own record yet)
+-- ------------------------------------------------------------
+create policy "admins manage clients"
+  on clients for all
+  using (is_admin())
+  with check (is_admin());
 
-create policy "clients_update_own"
-  on public.clients for update
-  to authenticated
-  using (owner_id = auth.uid())
-  with check (owner_id = auth.uid());
+-- ------------------------------------------------------------
+-- BLOCK DEFINITIONS  (admin only - this is the code-backed catalog)
+-- ------------------------------------------------------------
+create policy "admins manage block_definitions"
+  on block_definitions for all
+  using (is_admin())
+  with check (is_admin());
 
-create policy "clients_delete_own"
-  on public.clients for delete
-  to authenticated
-  using (owner_id = auth.uid());
+-- Everyone authenticated can read block_definitions (needed to render forms)
+create policy "authenticated users can read block_definitions"
+  on block_definitions for select
+  using (auth.role() = 'authenticated');
 
--- ---------------------------------------------------------------------------
--- sites
--- ---------------------------------------------------------------------------
+-- ------------------------------------------------------------
+-- ARCHETYPES / ARCHETYPE_BLOCKS  (admin only)
+-- ------------------------------------------------------------
+create policy "admins manage archetypes"
+  on archetypes for all
+  using (is_admin())
+  with check (is_admin());
 
-create policy "sites_select_own"
-  on public.sites for select
-  to authenticated
-  using (public.owns_client(client_id));
+create policy "authenticated users can read archetypes"
+  on archetypes for select
+  using (auth.role() = 'authenticated');
 
-create policy "sites_insert_own"
-  on public.sites for insert
-  to authenticated
-  with check (public.owns_client(client_id));
+create policy "admins manage archetype_blocks"
+  on archetype_blocks for all
+  using (is_admin())
+  with check (is_admin());
 
-create policy "sites_update_own"
-  on public.sites for update
-  to authenticated
-  using (public.owns_client(client_id))
-  with check (public.owns_client(client_id));
+create policy "authenticated users can read archetype_blocks"
+  on archetype_blocks for select
+  using (auth.role() = 'authenticated');
 
-create policy "sites_delete_own"
-  on public.sites for delete
-  to authenticated
-  using (public.owns_client(client_id));
+-- ------------------------------------------------------------
+-- SITES
+-- Admin: full access.
+-- Client: can only SELECT their own client's sites. No writes -
+-- site-level settings (domain, theme, composition) stay dev-only.
+-- ------------------------------------------------------------
+create policy "admins manage sites"
+  on sites for all
+  using (is_admin())
+  with check (is_admin());
 
--- Published sites are readable by anyone (public site rendering).
-create policy "sites_select_published_public"
-  on public.sites for select
-  to anon
-  using (status = 'published');
+create policy "clients can view their own sites"
+  on sites for select
+  using (client_id = current_client_id());
 
--- ---------------------------------------------------------------------------
--- blocks
--- ---------------------------------------------------------------------------
+-- ------------------------------------------------------------
+-- BLOCK INSTANCES
+-- Admin: full access.
+-- Client: can view instances belonging to their own site, and
+-- can update ONLY the content_draft field (enforced by only
+-- allowing update, application layer restricts which fields are
+-- sent - see note below on defense in depth).
+-- ------------------------------------------------------------
+create policy "admins manage block_instances"
+  on block_instances for all
+  using (is_admin())
+  with check (is_admin());
 
-create policy "blocks_select_own"
-  on public.blocks for select
-  to authenticated
-  using (public.owns_site(site_id));
-
-create policy "blocks_insert_own"
-  on public.blocks for insert
-  to authenticated
-  with check (public.owns_site(site_id));
-
-create policy "blocks_update_own"
-  on public.blocks for update
-  to authenticated
-  using (public.owns_site(site_id))
-  with check (public.owns_site(site_id));
-
-create policy "blocks_delete_own"
-  on public.blocks for delete
-  to authenticated
-  using (public.owns_site(site_id));
-
--- Blocks of published sites are publicly readable.
-create policy "blocks_select_published_public"
-  on public.blocks for select
-  to anon
+create policy "clients can view their own block_instances"
+  on block_instances for select
   using (
-    is_visible
-    and exists (
-      select 1 from public.sites s
-      where s.id = blocks.site_id
-        and s.status = 'published'
+    site_id in (
+      select id from sites where client_id = current_client_id()
     )
   );
 
--- ---------------------------------------------------------------------------
--- archetypes
--- Read-only library for clients; writes are service_role only (no policy).
--- ---------------------------------------------------------------------------
+create policy "clients can draft-edit their own block_instances"
+  on block_instances for update
+  using (
+    site_id in (
+      select id from sites where client_id = current_client_id()
+    )
+  )
+  with check (
+    site_id in (
+      select id from sites where client_id = current_client_id()
+    )
+  );
 
-create policy "archetypes_select_published"
-  on public.archetypes for select
-  to authenticated, anon
-  using (is_published);
+-- NOTE: Postgres RLS policies control row access, not individual
+-- column writes. To stop a 'client' user from overwriting `content`
+-- (published) directly instead of `content_draft`, the thin API
+-- layer (never the client hitting Supabase directly) must be the
+-- only path client edits take. This is why the architecture calls
+-- for a server-side function / API layer in front of Supabase for
+-- all client-role writes, rather than direct table access from
+-- the admin-tool frontend for that role.

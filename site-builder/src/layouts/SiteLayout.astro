@@ -15,6 +15,34 @@ const themeStyle = theme
       .map(([key, value]) => `${key}: ${value};`)
       .join(' ')
   : undefined;
+
+// Families the browser already has; never worth a network request.
+const SYSTEM_FAMILIES = new Set([
+  'system-ui', 'ui-sans-serif', 'ui-serif', 'ui-monospace', 'sans-serif',
+  'serif', 'monospace', 'cursive', 'fantasy', '-apple-system',
+  'blinkmacsystemfont', 'segoe ui', 'roboto', 'helvetica', 'helvetica neue',
+  'arial', 'georgia', 'times new roman', 'courier new',
+]);
+
+/**
+ * Pull the first (preferred) family out of each font token in the theme, so an
+ * archetype that asks for "Poppins, sans-serif" actually gets Poppins loaded.
+ */
+const webFonts = [
+  ...new Set(
+    Object.entries(theme ?? {})
+      .filter(([key]) => key.startsWith('--dbm-font-'))
+      .map(([, value]) => value.split(',')[0]?.trim().replace(/^['"]|['"]$/g, '') ?? '')
+      .filter((family) => family && !SYSTEM_FAMILIES.has(family.toLowerCase())),
+  ),
+];
+
+const googleFontsHref =
+  webFonts.length > 0
+    ? `https://fonts.googleapis.com/css2?${webFonts
+        .map((family) => `family=${encodeURIComponent(family).replace(/%20/g, '+')}:wght@400;600;700`)
+        .join('&')}&display=swap`
+    : undefined;
 ---
 
 <html lang="en">
@@ -23,7 +51,18 @@ const themeStyle = theme
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
-    {themeStyle && <style is:inline set:html={`:root { ${themeStyle} }`}></style>}
+    {googleFontsHref && (
+      <>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link rel="stylesheet" href={googleFontsHref} />
+      </>
+    )}
+    {/*
+      `:root:root` doubles specificity on purpose: Astro injects theme.css
+      after this tag, so a plain `:root` here would lose to the defaults.
+    */}
+    {themeStyle && <style is:inline set:html={`:root:root { ${themeStyle} }`}></style>}
   </head>
   <body>
     <main>

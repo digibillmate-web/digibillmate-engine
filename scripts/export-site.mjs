@@ -62,6 +62,91 @@ function toCssVars(theme) {
 }
 
 // ---------------------------------------------------------------------------
+// Content mapping
+// ---------------------------------------------------------------------------
+
+/**
+ * Translate stored content (shaped by `block_definitions.schema`) into the
+ * props the Astro components take.
+ *
+ * The DB shape is authoritative: it is what the admin tool validates against
+ * and what `client_editable_fields` names. The renderer adapts, not the schema,
+ * so this file is the only place the two vocabularies meet.
+ */
+const CONTENT_MAPPERS = {
+  hero: (c) => ({
+    heading: c.headline,
+    subheading: c.subheadline,
+    ...(c.background_image
+      ? { image: { src: c.background_image, alt: c.headline ?? '' } }
+      : {}),
+    ...(c.cta_label
+      ? {
+          primaryCta: {
+            label: c.cta_label,
+            href: c.cta_phone ? `tel:${String(c.cta_phone).replace(/[^+\d]/g, '')}` : '#contact',
+          },
+        }
+      : {}),
+  }),
+
+  services_grid: (c) => ({
+    heading: c.title,
+    services: (c.services ?? []).map((s) => ({
+      title: s.name,
+      description: s.description,
+      icon: s.icon,
+    })),
+  }),
+
+  pricing_offers: (c) => ({
+    heading: c.title,
+    offers: (c.offers ?? []).map((o) => ({
+      name: o.label,
+      price: o.price,
+      priceNote: o.note,
+    })),
+  }),
+
+  gallery: (c) => ({
+    heading: c.title,
+    items: (c.images ?? []).map((img) => ({
+      before: { src: img.before_url, alt: img.caption ? `${img.caption} — before` : 'Before' },
+      after: { src: img.after_url, alt: img.caption ? `${img.caption} — after` : 'After' },
+      caption: img.caption,
+    })),
+  }),
+
+  testimonials: (c) => ({
+    heading: c.title,
+    items: (c.reviews ?? []).map((r) => ({
+      quote: r.quote,
+      author: r.author,
+      rating: r.rating,
+    })),
+  }),
+
+  contact: (c) => ({
+    heading: c.title,
+    address: c.address,
+    phone: c.phone,
+    // Stored as a free-text string; the component accepts both.
+    hours: c.hours,
+    mapEmbedUrl: c.map_embed_url,
+  }),
+};
+
+function mapContent(key, content) {
+  const mapper = CONTENT_MAPPERS[key];
+  if (!mapper) fail(`No content mapper for block key "${key}" — add one to CONTENT_MAPPERS`);
+
+  // Drop keys the mapper left undefined so the JSON stays readable.
+  return Object.fromEntries(
+    Object.entries(mapper(content ?? {})).filter(([, value]) => value !== undefined),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -128,7 +213,7 @@ async function main() {
 
     blocks = data.map((row) => ({
       type: row.block_definitions?.key,
-      content: row.default_content ?? {},
+      content: mapContent(row.block_definitions?.key, row.default_content),
     }));
   } else {
     const { data, error } = await supabase
@@ -142,7 +227,10 @@ async function main() {
     blocks = data.map((row) => ({
       type: row.block_definitions?.key,
       // --draft previews unpublished edits; a null draft falls back to published.
-      content: (draft ? (row.content_draft ?? row.content) : row.content) ?? {},
+      content: mapContent(
+        row.block_definitions?.key,
+        (draft ? (row.content_draft ?? row.content) : row.content) ?? {},
+      ),
       ...(row.settings && Object.keys(row.settings).length > 0
         ? { settings: row.settings }
         : {}),

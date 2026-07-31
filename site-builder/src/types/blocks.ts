@@ -64,7 +64,7 @@ export interface PricingOffersContent {
   offers: Offer[];
 }
 
-/** before_after_gallery */
+/** gallery */
 export interface BeforeAfterItem {
   before: Image;
   after: Image;
@@ -93,7 +93,7 @@ export interface TestimonialsContent {
   items: Testimonial[];
 }
 
-/** contact_location */
+/** contact */
 export interface OpeningHours {
   /** e.g. "Mon - Fri" */
   days: string;
@@ -107,7 +107,8 @@ export interface ContactLocationContent {
   address?: string;
   phone?: string;
   email?: string;
-  hours?: OpeningHours[];
+  /** Free-text (as stored in Supabase) or a structured day/time table. */
+  hours?: string | OpeningHours[];
   /** Embeddable map URL (iframe src). */
   mapEmbedUrl?: string;
   cta?: Cta;
@@ -118,8 +119,8 @@ export type BlockContent =
   | { type: 'hero'; content: HeroContent }
   | { type: 'services_grid'; content: ServicesGridContent }
   | { type: 'pricing_offers'; content: PricingOffersContent }
-  | { type: 'before_after_gallery'; content: BeforeAfterGalleryContent }
+  | { type: 'gallery'; content: BeforeAfterGalleryContent }
   | { type: 'testimonials'; content: TestimonialsContent }
-  | { type: 'contact_location'; content: ContactLocationContent };
+  | { type: 'contact'; content: ContactLocationContent };
 
 export type BlockType = BlockContent['type'];

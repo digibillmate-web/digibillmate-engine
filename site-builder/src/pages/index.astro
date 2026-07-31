@@ -1,25 +1,19 @@
 ---
 /**
- * Development preview of the "Auto Service & Repair" archetype.
- * Renders every block component from a fixture so layout and theming can be
- * checked without Supabase. Real routes will feed BlockRenderer from exported
- * site JSON instead.
+ * Renders the exported Maria Cars site from real Supabase data.
+ *
+ * The JSON is produced by `npm run export:site -- <site_id>` at the repo root
+ * and is gitignored — run the export before building. The fixture in
+ * src/fixtures/ is kept only as a component-level reference.
  */
 import SiteLayout from '../layouts/SiteLayout.astro';
 import BlockRenderer from '../components/BlockRenderer.astro';
-import { autoServiceBlocks } from '../fixtures/auto-service';
+import type { ExportedSite } from '../types/site';
+import siteData from '../data/sites/mariacars.json';
 
-// Example of what an archetype theme preset looks like in practice.
-const theme = {
-  '--dbm-color-primary': '#c8102e',
-  '--dbm-color-accent': '#16191d',
-};
+const site = siteData as ExportedSite;
 ---
 
-<SiteLayout
-  title="Auto Service & Repair — block preview"
-  description="Development preview of the Auto Service & Repair archetype blocks."
-  theme={theme}
->
-  <BlockRenderer blocks={autoServiceBlocks} />
+<SiteLayout title={`Maria Cars — ${site.subdomain}`} theme={site.theme}>
+  <BlockRenderer blocks={site.blocks} />
 </SiteLayout>
