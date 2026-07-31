@@ -70,10 +70,19 @@ Environment variables to set on the project:
 | `NODE_VERSION` | Cloudflare | Yes — `22` or newer |
 | `SUPABASE_ANON_KEY` | `src/lib/supabase.ts` (currently unused) | No |
 
-`npm run build:site` exports the site from Supabase, then builds Astro. It exits
-non-zero if `SITE_ID` is unset, if any required Supabase variable is missing, or
-if the export fails — it never falls back to stale or fixture data. The export
-directory is cleared first, so a failed run leaves nothing behind to build.
+`npm run build:site` checks the site's status, exports it from Supabase, then
+builds Astro. It exits non-zero if `SITE_ID` is unset, if any required Supabase
+variable is missing, or if the export fails — it never falls back to stale or
+fixture data. The export directory is cleared first, so a failed run leaves
+nothing behind to build.
+
+**Status gate:** only sites with `status = 'published'` build. Anything else is
+refused before the export runs. A staging project that should preview drafts
+appends `--force`:
+
+```
+npm run build:site -- --force
+```
 
 ## Migrations
 

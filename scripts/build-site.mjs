@@ -1,10 +1,13 @@
 /**
  * One-site build: export from Supabase, then build the Astro site.
  *
- *   SITE_ID=<uuid> npm run build:site
+ *   SITE_ID=<uuid> npm run build:site [-- --force]
  *
  * This is the command a Cloudflare Pages project runs. Each project builds
  * exactly one site, identified by the SITE_ID environment variable.
+ *
+ * Only sites with status 'published' build by default; --force overrides that
+ * for deliberate preview/staging builds of draft sites.
  *
  * Every failure is fatal and non-zero. A build that silently falls back to
  * stale or fixture data would publish the wrong content to a client's domain,
@@ -14,14 +17,22 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createClient } from '@supabase/supabase-js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE_BUILDER = join(ROOT, 'site-builder');
 const DATA_DIR = join(SITE_BUILDER, 'src/data/sites');
 
+/**
+ * Abort the build. Throws rather than calling process.exit() — an immediate
+ * exit while the Supabase HTTP socket is still closing trips a libuv assertion
+ * on Windows and replaces the exit code with garbage, which would make a
+ * blocked build look like a crash to CI.
+ */
+class BuildError extends Error {}
+
 function fail(message) {
-  console.error(`\n✖ build:site — ${message}\n`);
-  process.exit(1);
+  throw new BuildError(message);
 }
 
 function run(label, command, args, cwd) {
@@ -33,6 +44,7 @@ function run(label, command, args, cwd) {
   if (result.status !== 0) fail(`${label} exited with code ${result.status}`);
 }
 
+async function main() {
 // --- 1. Required configuration ---------------------------------------------
 
 const { SITE_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
@@ -56,7 +68,43 @@ if (missing.length > 0) {
   );
 }
 
-console.log(`Building site ${SITE_ID}`);
+const force = process.argv.slice(2).includes('--force');
+
+console.log(`Building site ${SITE_ID}${force ? ' (--force)' : ''}`);
+
+// --- 1b. Status gate --------------------------------------------------------
+
+// Publishing a draft to a client's live domain is the expensive mistake here,
+// so the default path refuses anything not marked published. Checked before
+// the export so a blocked build does no work and touches no files.
+{
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+  });
+
+  const { data, error } = await supabase
+    .from('sites')
+    .select('status')
+    .eq('id', SITE_ID)
+    .single();
+
+  if (error) fail(`Could not read status for site ${SITE_ID}: ${error.message}`);
+
+  if (data.status !== 'published') {
+    if (!force) {
+      fail(
+        `Site ${SITE_ID} is '${data.status}', not 'published' — refusing to ` +
+          'build. Update status in Supabase or pass --force to override.',
+      );
+    }
+
+    console.warn(
+      `  ⚠ status is '${data.status}', not 'published' — building anyway (--force)`,
+    );
+  } else {
+    console.log('  status: published');
+  }
+}
 
 // --- 2. Clear stale exports -------------------------------------------------
 
@@ -109,3 +157,11 @@ if (!existsSync(ASTRO_BIN)) {
 run('astro build', process.execPath, [ASTRO_BIN, 'build'], SITE_BUILDER);
 
 console.log(`\n✔ build:site complete — output in site-builder/dist\n`);
+}
+
+main().catch((error) => {
+  const message = error instanceof BuildError ? error.message : (error.stack ?? String(error));
+  console.error(`\n✖ build:site — ${message}\n`);
+  // Set the code and let the process drain naturally; see fail() above.
+  process.exitCode = 1;
+});
