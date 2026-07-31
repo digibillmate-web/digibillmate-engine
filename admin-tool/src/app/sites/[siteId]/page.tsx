@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import SignOutButton from '@/components/SignOutButton';
-import SchemaView from '@/components/SchemaView';
+import SchemaForm from '@/components/SchemaForm';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
 
 export const dynamic = 'force-dynamic';
@@ -80,10 +80,6 @@ export default async function SiteEditorPage({
           blocks
         </p>
 
-        <div className="alert alert--info" role="status">
-          Read-only preview. Editing and save arrive at the next checkpoint.
-        </div>
-
         {error && (
           <div className="alert alert--error" role="alert">
             Could not load blocks: {error.message}
@@ -114,7 +110,13 @@ export default async function SiteEditorPage({
 
               <div className="block__body">
                 {definition ? (
-                  <SchemaView fields={fields} content={block.content} unmapped={unmapped} />
+                  <SchemaForm
+                    siteId={siteId}
+                    blockId={block.id}
+                    fields={fields}
+                    initialContent={(block.content ?? {}) as Record<string, unknown>}
+                    unmapped={unmapped}
+                  />
                 ) : (
                   <p className="cell-muted">
                     No block definition joined — check the foreign key.
