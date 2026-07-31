@@ -38,7 +38,7 @@ export default async function SiteEditorPage({
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, name, subdomain, status, archetypes(key, name)')
+    .select('id, name, subdomain, status, deploy_hook_url, archetypes(key, name)')
     .eq('id', siteId)
     .single();
 
@@ -81,7 +81,11 @@ export default async function SiteEditorPage({
           blocks
         </p>
 
-        <PublishButton siteId={siteId} siteStatus={site.status} />
+        <PublishButton
+          siteId={siteId}
+          siteStatus={site.status}
+          hasDeployHook={Boolean(site.deploy_hook_url)}
+        />
 
         {error && (
           <div className="alert alert--error" role="alert">

@@ -2,15 +2,17 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 /**
- * Triggers a Cloudflare Pages deploy.
+ * Triggers a Cloudflare Pages deploy for one site.
  *
- * The hook URL is a capability: anyone holding it can trigger builds, so it
- * lives in server-only env and never reaches the browser. The browser asks
- * this route to publish; the route decides whether to.
+ * The hook lives on the site row (sites.deploy_hook_url), not in an env var.
+ * A deploy hook rebuilds one fixed Pages project and cannot be told which site
+ * to build, so one hook per site is the only arrangement that stays correct as
+ * sites are added — a single global hook would rebuild the wrong site while
+ * reporting success.
  *
  * Deploy hooks are fire-and-forget. Cloudflare's response confirms only that
- * the trigger was *accepted* and queued — not that the build ran, succeeded,
- * or went live. This route reports exactly that and no more.
+ * the trigger was accepted and queued — not that the build ran, succeeded, or
+ * went live. This route reports exactly that and no more.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -50,32 +52,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'siteId is required.' }, { status: 400 });
   }
 
-  const hookUrl = process.env.CLOUDFLARE_DEPLOY_HOOK_URL;
+  // The hook is read under the caller's own session, so RLS governs access to
+  // it exactly as it governs the rest of the row.
+  const { data: site, error: siteError } = await supabase
+    .from('sites')
+    .select('id, name, subdomain, status, deploy_hook_url')
+    .eq('id', siteId)
+    .single();
 
-  if (!hookUrl) {
+  if (siteError || !site) {
     return NextResponse.json(
-      {
-        ok: false,
-        error:
-          'CLOUDFLARE_DEPLOY_HOOK_URL is not set. Add it to admin-tool/.env.local (server-side only).',
-      },
-      { status: 503 },
+      { ok: false, error: 'Site not found, or not visible to your account.' },
+      { status: 404 },
     );
   }
 
-  // A deploy hook carries no site parameter — it rebuilds one fixed Pages
-  // project, which builds whatever *its* SITE_ID env var points at. Publishing
-  // a different site through this hook would rebuild the wrong site while
-  // reporting success, so refuse rather than mislead.
-  const hookSiteId = process.env.CLOUDFLARE_DEPLOY_HOOK_SITE_ID;
-
-  if (hookSiteId && hookSiteId !== siteId) {
+  if (!site.deploy_hook_url) {
     return NextResponse.json(
       {
         ok: false,
         error:
-          'This deploy hook builds a different site. Each Pages project needs its own hook, ' +
-          'since a hook cannot be told which site to build.',
+          `"${site.name}" has no deploy hook yet. Create its Cloudflare Pages project, then ` +
+          'save the deploy hook on the site so it knows where to publish.',
       },
       { status: 409 },
     );
@@ -83,7 +81,7 @@ export async function POST(request: Request) {
 
   let response: Response;
   try {
-    response = await fetch(hookUrl, { method: 'POST' });
+    response = await fetch(site.deploy_hook_url, { method: 'POST' });
   } catch (error) {
     return NextResponse.json(
       {
@@ -116,6 +114,5 @@ export async function POST(request: Request) {
     triggeredAt: new Date().toISOString(),
     // Deliberately explicit: accepted !== built !== live.
     note: 'Deploy queued at Cloudflare. Build status is not reported back here.',
-    unscoped: !hookSiteId,
   });
 }

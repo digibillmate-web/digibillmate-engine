@@ -12,15 +12,18 @@ import { useState } from 'react';
 type Status =
   | { kind: 'idle' }
   | { kind: 'triggering' }
-  | { kind: 'queued'; deployId: string | null; at: string; unscoped: boolean }
+  | { kind: 'queued'; deployId: string | null; at: string }
   | { kind: 'error'; message: string };
 
 export default function PublishButton({
   siteId,
   siteStatus,
+  hasDeployHook,
 }: {
   siteId: string;
   siteStatus: string;
+  /** Whether sites.deploy_hook_url is set. Without it there is nowhere to publish. */
+  hasDeployHook: boolean;
 }) {
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
 
@@ -41,7 +44,6 @@ export default function PublishButton({
         error?: string;
         deployId?: string | null;
         triggeredAt?: string;
-        unscoped?: boolean;
       };
 
       if (!res.ok || !data.ok) {
@@ -53,7 +55,6 @@ export default function PublishButton({
         kind: 'queued',
         deployId: data.deployId ?? null,
         at: data.triggeredAt ?? new Date().toISOString(),
-        unscoped: Boolean(data.unscoped),
       });
     } catch (error) {
       setStatus({
@@ -70,7 +71,7 @@ export default function PublishButton({
           className="btn btn--primary"
           type="button"
           onClick={publish}
-          disabled={status.kind === 'triggering'}
+          disabled={status.kind === 'triggering' || !hasDeployHook}
         >
           {status.kind === 'triggering' ? 'Triggering…' : 'Publish'}
         </button>
@@ -79,6 +80,14 @@ export default function PublishButton({
           Rebuilds the site from saved content and deploys it.
         </span>
       </div>
+
+      {!hasDeployHook && (
+        <p className="publish__warn">
+          No deploy hook set for this site. Create its Cloudflare Pages project, then save the
+          hook to <code>sites.deploy_hook_url</code> — each site needs its own, because a hook
+          cannot be told which site to build.
+        </p>
+      )}
 
       {notPublished && (
         <p className="publish__warn">
@@ -96,12 +105,6 @@ export default function PublishButton({
             {status.deployId && <>Deploy ID {status.deployId} · </>}
             triggered {new Date(status.at).toLocaleTimeString()}
           </div>
-          {status.unscoped && (
-            <div className="publish__meta">
-              Note: CLOUDFLARE_DEPLOY_HOOK_SITE_ID is unset, so the hook was not verified to
-              belong to this site.
-            </div>
-          )}
         </div>
       )}
 
