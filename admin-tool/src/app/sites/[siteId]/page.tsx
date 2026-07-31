@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import SignOutButton from '@/components/SignOutButton';
 import SchemaForm from '@/components/SchemaForm';
+import PublishButton from '@/components/PublishButton';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
 
 export const dynamic = 'force-dynamic';
@@ -79,6 +80,8 @@ export default async function SiteEditorPage({
           <span className={`badge badge--${site.status}`}>{site.status}</span> · {blocks.length}{' '}
           blocks
         </p>
+
+        <PublishButton siteId={siteId} siteStatus={site.status} />
 
         {error && (
           <div className="alert alert--error" role="alert">
