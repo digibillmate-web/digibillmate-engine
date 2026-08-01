@@ -21,6 +21,17 @@
   "workers_dev": false,
   "preview_urls": false,
 
+  // Attaches the custom domain on deploy and manages its DNS record, so the
+  // hostname does not have to be wired up by hand in the dashboard. Requires
+  // digibillmate.com to be an active zone on this Cloudflare account; if it
+  // is not, the deploy fails with an explicit error rather than half-working.
+  "routes": [
+    {
+      "pattern": "websites.digibillmate.com",
+      "custom_domain": true
+    }
+  ],
+
   "observability": {
     "enabled": true
   }
