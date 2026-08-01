@@ -40,9 +40,8 @@ const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : undefined;
 
 <style>
   .header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
+    /* Scrolls away with the page rather than pinning to the top. */
+    position: static;
     background: var(--dbm-color-background);
     border-bottom: 1px solid var(--dbm-color-border);
     box-shadow: var(--dbm-shadow-sm);

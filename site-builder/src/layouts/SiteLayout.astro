@@ -11,8 +11,15 @@ interface Props {
 
 const { title, description, theme } = Astro.props;
 
+// Every theme key is exported as a --dbm-* custom property, including
+// favicon-url, which isn't a CSS value — it belongs in a <link> tag instead.
+// Filtered out here so it doesn't also get written into the inline <style>.
+const FAVICON_VAR = '--dbm-favicon-url';
+const faviconUrl = theme?.[FAVICON_VAR];
+
 const themeStyle = theme
   ? Object.entries(theme)
+      .filter(([key]) => key !== FAVICON_VAR)
       .map(([key, value]) => `${key}: ${value};`)
       .join(' ')
   : undefined;
@@ -25,6 +32,7 @@ const themeStyle = theme
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
+    {faviconUrl && <link rel="icon" href={faviconUrl} />}
     {/*
       `:root:root` doubles specificity on purpose: Astro injects theme.css
       after this tag, so a plain `:root` here would lose to the defaults.

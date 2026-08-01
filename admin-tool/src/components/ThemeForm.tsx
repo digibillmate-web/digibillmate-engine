@@ -10,6 +10,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { saveTheme, relinkTheme } from '@/app/sites/[siteId]/theme-actions';
+import ImageField from '@/components/fields/ImageField';
 import {
   THEME_TOKENS,
   primaryFamily,
@@ -116,7 +117,7 @@ export default function ThemeForm({
                 {changed && <span className="themetoken__changed">changed</span>}
               </label>
 
-              {token.kind === 'color' ? (
+              {token.kind === 'color' && (
                 <div className="themetoken__row">
                   <input
                     type="color"
@@ -133,13 +134,24 @@ export default function ThemeForm({
                     onChange={(e) => set(token.key, e.target.value)}
                   />
                 </div>
-              ) : (
+              )}
+
+              {token.kind === 'font' && (
                 <input
                   id={`t-${token.key}`}
                   className="ef__input"
                   value={raw}
                   placeholder={token.hint}
                   onChange={(e) => set(token.key, e.target.value)}
+                />
+              )}
+
+              {token.kind === 'image' && (
+                <ImageField
+                  id={`t-${token.key}`}
+                  value={raw}
+                  uploadPrefix={`${siteId}/theme`}
+                  onChange={(next) => set(token.key, next)}
                 />
               )}
 

@@ -6,7 +6,7 @@
  * nothing in the database knows about CSS.
  */
 
-export type TokenKind = 'color' | 'font';
+export type TokenKind = 'color' | 'font' | 'image';
 
 export interface TokenSpec {
   key: string;
@@ -26,6 +26,12 @@ export const THEME_TOKENS: TokenSpec[] = [
   { key: 'color-text', label: 'Text', kind: 'color', hint: 'Body copy' },
   { key: 'font-heading', label: 'Heading font', kind: 'font', hint: 'e.g. Poppins, sans-serif' },
   { key: 'font-body', label: 'Body font', kind: 'font', hint: 'e.g. Inter, sans-serif' },
+  {
+    key: 'favicon-url',
+    label: 'Favicon',
+    kind: 'image',
+    hint: 'Small square image shown in the browser tab',
+  },
 ];
 
 export type ThemeValues = Record<string, string>;
