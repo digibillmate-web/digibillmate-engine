@@ -13,6 +13,14 @@
     "binding": "ASSETS"
   },
 
+  // Cloudflare Access is bound to a hostname, so it protects
+  // websites.digibillmate.com and nothing else. The default
+  // <worker>.workers.dev URL would serve the same admin app with no
+  // Access check in front of it — an unprotected side door. Turning it
+  // off means the custom domain is the only way in.
+  "workers_dev": false,
+  "preview_urls": false,
+
   "observability": {
     "enabled": true
   }
