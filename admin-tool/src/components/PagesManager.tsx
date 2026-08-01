@@ -14,8 +14,8 @@ import {
   updatePage,
   deletePage,
   reorderPages,
-  normaliseSlug,
 } from '@/app/sites/[siteId]/page-actions';
+import { normaliseSlug } from '@/lib/page-slug';
 
 export interface PageRow {
   id: string;
