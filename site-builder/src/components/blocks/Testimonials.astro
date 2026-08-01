@@ -1,5 +1,6 @@
 ---
 import type { TestimonialsContent } from '../../types/blocks';
+import CardRail from '../CardRail.astro';
 
 type Props = TestimonialsContent;
 
@@ -10,7 +11,7 @@ const { heading, intro, items } = Astro.props;
   <div class="dbm-container">
     <h2 class="dbm-heading">{heading}</h2>
     {intro && <p class="dbm-intro">{intro}</p>}
-    <ul class="testimonials__grid">
+    <CardRail label="Testimonials" autoplay>
       {items.map((item) => (
         <li class="testimonials__card">
           {typeof item.rating === 'number' && (
@@ -30,7 +31,7 @@ const { heading, intro, items } = Astro.props;
           </div>
         </li>
       ))}
-    </ul>
+    </CardRail>
   </div>
 </section>
 
@@ -39,16 +40,10 @@ const { heading, intro, items } = Astro.props;
     background: var(--dbm-color-surface);
   }
 
-  .testimonials__grid {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: var(--dbm-space-md);
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
 
   .testimonials__card {
+    /* Full height so cards in a rail align regardless of quote length. */
+    height: 100%;
     background: var(--dbm-color-background);
     border: 1px solid var(--dbm-color-border);
     border-radius: var(--dbm-radius-md);

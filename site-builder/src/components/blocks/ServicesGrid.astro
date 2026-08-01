@@ -1,5 +1,6 @@
 ---
 import type { ServicesGridContent } from '../../types/blocks';
+import CardRail from '../CardRail.astro';
 
 type Props = ServicesGridContent;
 
@@ -19,7 +20,7 @@ function formatPrice(price: string | number): string {
   <div class="dbm-container">
     <h2 class="dbm-heading">{heading}</h2>
     {intro && <p class="dbm-intro">{intro}</p>}
-    <ul class="services__grid">
+    <CardRail label="Services">
       {services.map((service) => (
         <li class="services__card">
           {service.image ? (
@@ -46,23 +47,16 @@ function formatPrice(price: string | number): string {
           </div>
         </li>
       ))}
-    </ul>
+    </CardRail>
   </div>
 </section>
 
 <style>
-  .services__grid {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: var(--dbm-space-md);
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  }
-
   .services__card {
     display: flex;
     flex-direction: column;
+    /* Full height so cards in a rail line up regardless of copy length. */
+    height: 100%;
     overflow: hidden;
     background: var(--dbm-color-background);
     border: 1px solid var(--dbm-color-border);

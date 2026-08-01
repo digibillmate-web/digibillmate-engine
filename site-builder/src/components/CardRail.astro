@@ -1,0 +1,217 @@
+---
+/**
+ * Horizontal card rail: the "slide through several cards at once" pattern the
+ * services and testimonials sections use.
+ *
+ * Built on native scroll-snap rather than a JS transform carousel. That gives
+ * touch momentum, trackpad swiping, keyboard scrolling and screen-reader
+ * reachability for free, and it still works with JS disabled — the arrows are
+ * an enhancement over something that already scrolls.
+ */
+interface Props {
+  /** Accessible name, e.g. "Services". */
+  label: string;
+  /** Advance on a timer. Off by default: reading cards is not a slideshow. */
+  autoplay?: boolean;
+  /** Extra class on the rail, for per-section card sizing. */
+  class?: string;
+}
+
+const { label, autoplay = false, class: className = '' } = Astro.props;
+---
+
+<div class="rail" data-rail data-autoplay={autoplay ? 'true' : undefined}>
+  <button class="rail__arrow rail__arrow--prev" type="button" aria-label={`Scroll ${label} left`} hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+      <path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </button>
+
+  <ul class={`rail__track ${className}`} data-rail-track aria-label={label}>
+    <slot />
+  </ul>
+
+  <button class="rail__arrow rail__arrow--next" type="button" aria-label={`Scroll ${label} right`} hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+      <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </button>
+</div>
+
+<style is:global>
+  .rail {
+    position: relative;
+  }
+
+  .rail__track {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 var(--dbm-space-xs);
+    display: grid;
+    grid-auto-flow: column;
+    /*
+     * A fixed column width, deliberately not minmax(0, …): a zero floor lets
+     * the grid shrink every card to fit the container, so the track never
+     * overflows and the rail silently stops scrolling.
+     *
+     * Slightly under full width so the next card peeks, which is what signals
+     * there is more to scroll to.
+     */
+    grid-auto-columns: min(85%, 320px);
+    gap: var(--dbm-space-md);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    /* Room for card shadows, which a clipped overflow would shave off. */
+    padding-inline: 2px;
+    scrollbar-width: thin;
+  }
+
+  .rail__track > li {
+    scroll-snap-align: start;
+    min-width: 0;
+  }
+
+  /* Three across on a desktop, matching how these sections are laid out. */
+  @media (min-width: 768px) {
+    .rail__track {
+      grid-auto-columns: calc((100% - 2 * var(--dbm-space-md)) / 3);
+    }
+
+    .rail__track--wide {
+      grid-auto-columns: calc((100% - var(--dbm-space-md)) / 2);
+    }
+  }
+
+  .rail__arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--dbm-color-border);
+    border-radius: 50%;
+    background: var(--dbm-color-background);
+    color: var(--dbm-color-text);
+    cursor: pointer;
+    box-shadow: var(--dbm-shadow-md);
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .rail__arrow:hover,
+  .rail__arrow:focus-visible {
+    background: var(--dbm-color-primary);
+    color: var(--dbm-color-primary-contrast);
+    border-color: var(--dbm-color-primary);
+  }
+
+  .rail__arrow[hidden] {
+    display: none;
+  }
+
+  .rail__arrow--prev {
+    left: -10px;
+  }
+
+  .rail__arrow--next {
+    right: -10px;
+  }
+
+  @media (max-width: 767px) {
+    .rail__arrow {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rail__track {
+      scroll-behavior: auto;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Arrow controls for every rail on the page.
+   *
+   * Arrows stay hidden unless the track actually overflows — a rail showing
+   * three cards with only three cards in it has nowhere to scroll, and dead
+   * controls invite clicks that do nothing.
+   */
+  const AUTOPLAY_MS = 4500;
+
+  document.querySelectorAll<HTMLElement>('[data-rail]').forEach((rail) => {
+    const track = rail.querySelector<HTMLElement>('[data-rail-track]');
+    const prev = rail.querySelector<HTMLButtonElement>('.rail__arrow--prev');
+    const next = rail.querySelector<HTMLButtonElement>('.rail__arrow--next');
+    if (!track || !prev || !next) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const step = () => track.clientWidth * 0.8;
+
+    /*
+     * A few pixels of slack, not an exact comparison. The track carries 2px of
+     * inline padding so card shadows are not clipped, and scroll-snap settles
+     * on sub-pixel offsets, so a resting "start" is typically 2 rather than 0.
+     * A tight threshold leaves the back arrow showing with nothing behind it.
+     */
+    const EDGE_SLACK = 8;
+
+    function sync() {
+      const overflows = track.scrollWidth > track.clientWidth + EDGE_SLACK;
+      const atStart = track.scrollLeft <= EDGE_SLACK;
+      const atEnd =
+        track.scrollLeft + track.clientWidth >= track.scrollWidth - EDGE_SLACK;
+
+      prev.hidden = !overflows || atStart;
+      next.hidden = !overflows || atEnd;
+    }
+
+    prev.addEventListener('click', () => track.scrollBy({ left: -step() }));
+    next.addEventListener('click', () => track.scrollBy({ left: step() }));
+
+    track.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync);
+    sync();
+
+    if (rail.dataset.autoplay !== 'true' || reduceMotion) return;
+
+    let timer: number | undefined;
+
+    const advance = () => {
+      const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+      // Wrapping to the start keeps a testimonial rail circulating rather than
+      // parking silently at the last card.
+      track.scrollTo({ left: atEnd ? 0 : track.scrollLeft + step() });
+    };
+
+    const start = () => {
+      stop();
+      if (track.scrollWidth > track.clientWidth + 4) {
+        timer = window.setInterval(advance, AUTOPLAY_MS);
+      }
+    };
+
+    const stop = () => {
+      if (timer !== undefined) window.clearInterval(timer);
+      timer = undefined;
+    };
+
+    rail.addEventListener('mouseenter', stop);
+    rail.addEventListener('mouseleave', start);
+    rail.addEventListener('focusin', stop);
+    rail.addEventListener('focusout', start);
+    // Dragging the rail by hand should not fight a timer mid-gesture.
+    track.addEventListener('pointerdown', stop);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop();
+      else start();
+    });
+
+    start();
+  });
+</script>
