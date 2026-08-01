@@ -6,7 +6,11 @@ import SignOutButton from '@/components/SignOutButton';
  * Shared chrome. Reads the session itself rather than taking the email as a
  * prop, so no page has to remember to pass it.
  */
-export default async function AppHeader({ current }: { current?: 'sites' | 'clients' }) {
+export default async function AppHeader({
+  current,
+}: {
+  current?: 'dashboard' | 'sites' | 'clients';
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -20,6 +24,12 @@ export default async function AppHeader({ current }: { current?: 'sites' | 'clie
         </Link>
 
         <nav className="app-nav">
+          <Link
+            className={`app-nav__link ${current === 'dashboard' ? 'is-current' : ''}`}
+            href="/dashboard"
+          >
+            Dashboard
+          </Link>
           <Link className={`app-nav__link ${current === 'sites' ? 'is-current' : ''}`} href="/sites">
             Sites
           </Link>

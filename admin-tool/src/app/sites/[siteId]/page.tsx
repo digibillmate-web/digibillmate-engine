@@ -6,6 +6,7 @@ import SchemaForm from '@/components/SchemaForm';
 import PublishButton from '@/components/PublishButton';
 import DeployHookForm from '@/components/DeployHookForm';
 import ThemeForm from '@/components/ThemeForm';
+import RenameSiteForm from '@/components/RenameSiteForm';
 import BlockControls from '@/components/BlockControls';
 import AddBlockBar, { type CatalogEntry } from '@/components/AddBlockBar';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
@@ -156,6 +157,7 @@ export default async function SiteEditorPage({
 
         {active === 'settings' && (
           <>
+            <RenameSiteForm siteId={siteId} initialName={site.name} />
             <PublishButton
               siteId={siteId}
               siteStatus={site.status}

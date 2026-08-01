@@ -822,6 +822,52 @@ tr:has(.badge--archived) .cell-name a {
   margin-top: 1rem;
 }
 
+/* --- Dashboard ---------------------------------------------------------- */
+
+.statgrid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  margin-bottom: 1.75rem;
+}
+
+.statcard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.9rem 1rem;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow);
+}
+
+.statcard__value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.statcard__label {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+.section-title {
+  font-size: 1rem;
+  margin: 0 0 0.75rem;
+}
+
+.settings-card {
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.settings-card__title {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+}
+
 /* --- Deploy hook ------------------------------------------------------ */
 
 .hookform {
