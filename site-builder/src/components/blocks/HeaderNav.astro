@@ -6,20 +6,39 @@ type Props = HeaderNavContent;
 const { businessName, logo, navLinks, phone, cta } = Astro.props;
 
 const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : undefined;
+const hasNav = Boolean(navLinks && navLinks.length > 0);
+
+// Home is '/' once a site has real pages, but stays '#top' on a single-page
+// site where the nav is anchor links into sections.
+const brandHref = navLinks?.find((link) => link.href === '/') ? '/' : '#top';
 ---
 
 <header class="header" id="top">
   <div class="dbm-container header__inner">
-    <a class="header__brand" href="#top">
+    <a class="header__brand" href={brandHref}>
       {logo
         ? <img class="header__logo" src={logo.src} alt={logo.alt} width="200" height="56" />
         : <span class="header__name">{businessName}</span>}
     </a>
 
-    {navLinks && navLinks.length > 0 && (
-      <nav class="header__nav" aria-label="Primary">
+    {hasNav && (
+      <button
+        class="header__toggle"
+        type="button"
+        aria-label="Menu"
+        aria-expanded="false"
+        aria-controls="header-nav"
+      >
+        <span class="header__bars" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+      </button>
+    )}
+
+    {hasNav && (
+      <nav class="header__nav" id="header-nav" aria-label="Primary">
         <ul class="header__links">
-          {navLinks.map((link) => (
+          {navLinks!.map((link) => (
             <li>
               <a
                 class="header__link"
@@ -143,23 +162,158 @@ const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : undefined;
     white-space: nowrap;
   }
 
-  /* Below the fold of a phone screen the number is the priority, not the nav. */
-  @media (max-width: 767px) {
+  /* The toggle only exists on small screens. */
+  .header__toggle {
+    display: none;
+    order: 3;
+    margin-left: auto;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid var(--dbm-color-border);
+    border-radius: var(--dbm-radius-sm);
+    background: var(--dbm-color-background);
+    cursor: pointer;
+  }
+
+  .header__bars {
+    display: grid;
+    gap: 4px;
+    justify-items: center;
+  }
+
+  .header__bars span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--dbm-color-text);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  /* Bars become an X while the menu is open. */
+  .header__toggle[aria-expanded='true'] .header__bars span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+
+  .header__toggle[aria-expanded='true'] .header__bars span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .header__toggle[aria-expanded='true'] .header__bars span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  @media (max-width: 900px) {
+    .header__toggle {
+      display: grid;
+      place-items: center;
+    }
+
+    .header__actions {
+      /* The toggle takes the right-hand slot; actions move into the panel. */
+      order: 4;
+      width: 100%;
+      margin-left: 0;
+      justify-content: center;
+      padding-bottom: var(--dbm-space-sm);
+    }
+
     .header__nav {
-      order: 3;
+      order: 5;
       width: 100%;
       margin-inline: 0;
+    }
+
+    /*
+     * Collapsed by default and revealed by the toggle. `display: none` rather
+     * than a height animation: a hidden menu must be unreachable by keyboard
+     * and invisible to screen readers, which a zero-height container is not.
+     */
+    .header__nav,
+    .header__actions {
+      display: none;
+    }
+
+    .header__inner.is-open .header__nav,
+    .header__inner.is-open .header__actions {
+      display: flex;
+    }
+
+    .header__inner.is-open .header__nav {
       border-top: 1px solid var(--dbm-color-border);
-      padding-block: var(--dbm-space-xs);
+      padding-block: var(--dbm-space-sm);
     }
 
     .header__links {
-      gap: var(--dbm-space-sm);
-      justify-content: center;
+      flex-direction: column;
+      gap: 0;
+      width: 100%;
     }
 
-    .header__phone-number {
-      display: none;
+    .header__links li {
+      border-bottom: 1px solid var(--dbm-color-border);
+    }
+
+    .header__links li:last-child {
+      border-bottom: 0;
+    }
+
+    .header__link {
+      display: block;
+      padding: 0.7rem 0.2rem;
+      border-bottom: 0;
+      font-size: var(--dbm-text-base);
+    }
+
+    .header__link[aria-current='page'] {
+      border-bottom: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .header__bars span {
+      transition: none;
     }
   }
 </style>
+
+<script>
+  /**
+   * Mobile menu toggle. Progressive enhancement: without JS the toggle simply
+   * does nothing and the nav stays collapsed, so the phone number and CTA in
+   * the header remain the way to make contact.
+   */
+  document.querySelectorAll<HTMLElement>('.header__inner').forEach((inner) => {
+    const toggle = inner.querySelector<HTMLButtonElement>('.header__toggle');
+    const nav = inner.querySelector<HTMLElement>('.header__nav');
+    if (!toggle || !nav) return;
+
+    const setOpen = (open: boolean) => {
+      inner.classList.toggle('is-open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+
+    toggle.addEventListener('click', () => {
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    // Following a link should not leave the menu open behind the new page,
+    // and matters for same-page anchors where no navigation happens at all.
+    nav.addEventListener('click', (event) => {
+      if ((event.target as HTMLElement).closest('a')) setOpen(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && inner.classList.contains('is-open')) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+
+    // Leaving the mobile breakpoint with the menu open would otherwise strand
+    // the open state on a layout that has no toggle to close it.
+    window.matchMedia('(max-width: 900px)').addEventListener('change', (event) => {
+      if (!event.matches) setOpen(false);
+    });
+  });
+</script>
