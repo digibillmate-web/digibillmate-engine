@@ -347,6 +347,39 @@ async function main() {
       .map(toBlock),
   }));
 
+  // --- Navigation -----------------------------------------------------------
+
+  /**
+   * Pages are the source of truth for navigation, so a new page appears in the
+   * menu without anyone editing a block. Hand-entered nav_links still win when
+   * present — a site may want external or anchor links the page list cannot
+   * express — so this fills the gap rather than overriding a deliberate choice.
+   */
+  const hrefFor = (slug) => (slug ? `/${slug}/` : '/');
+
+  const derivedNav = pageRows
+    .filter((page) => page.show_in_nav !== false)
+    .map((page) => ({
+      label: page.nav_label || page.title,
+      href: hrefFor(page.slug ?? ''),
+    }));
+
+  // Which link is "current" is deliberately NOT decided here. A page without
+  // its own header inherits the home page's, so a flag baked in at export time
+  // would mark Home as current on every inherited copy. The renderer marks it,
+  // where the page actually being rendered is known.
+  for (const page of pages) {
+    for (const block of page.blocks) {
+      if (block.type === 'header_nav' && (block.content.navLinks ?? []).length === 0) {
+        block.content.navLinks = derivedNav;
+      }
+
+      if (block.type === 'footer' && (block.content.quickLinks ?? []).length === 0) {
+        block.content.quickLinks = derivedNav;
+      }
+    }
+  }
+
   // A site whose home page has no blocks would build a blank index and report
   // success. Empty secondary pages are a legitimate work-in-progress; an empty
   // home page is not.

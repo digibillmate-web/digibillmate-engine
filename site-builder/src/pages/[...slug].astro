@@ -34,11 +34,38 @@ function composePage(page: ExportedPage, home: ExportedPage): BlockContent[] {
   const ownBefore = pick(CHROME_BEFORE, page);
   const ownAfter = pick(CHROME_AFTER, page);
 
-  return [
+  const blocks = [
     ...(ownBefore.length > 0 ? ownBefore : pick(CHROME_BEFORE, home)),
     ...page.blocks.filter((block) => !isChrome(block)),
     ...(ownAfter.length > 0 ? ownAfter : pick(CHROME_AFTER, home)),
   ];
+
+  return blocks.map((block) => markCurrentNav(block, page));
+}
+
+/**
+ * Flags the nav link pointing at this page.
+ *
+ * Done here rather than in the export because an inherited header is the home
+ * page's object: a flag baked in at export time would mark Home as current on
+ * every page that inherits it. The block is copied rather than mutated, since
+ * that same object is shared by every page inheriting it.
+ */
+function markCurrentNav(block: BlockContent, page: ExportedPage): BlockContent {
+  if (block.type !== 'header_nav') return block;
+
+  const links = block.content.navLinks;
+  if (!links || links.length === 0) return block;
+
+  const here = page.slug ? `/${page.slug}/` : '/';
+
+  return {
+    ...block,
+    content: {
+      ...block.content,
+      navLinks: links.map((link) => ({ ...link, current: link.href === here })),
+    },
+  };
 }
 
 export async function getStaticPaths() {

@@ -20,7 +20,15 @@ const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : undefined;
       <nav class="header__nav" aria-label="Primary">
         <ul class="header__links">
           {navLinks.map((link) => (
-            <li><a class="header__link" href={link.href}>{link.label}</a></li>
+            <li>
+              <a
+                class="header__link"
+                href={link.href}
+                aria-current={link.current ? 'page' : undefined}
+              >
+                {link.label}
+              </a>
+            </li>
           ))}
         </ul>
       </nav>
@@ -99,6 +107,12 @@ const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : undefined;
 
   .header__link:hover,
   .header__link:focus-visible {
+    color: var(--dbm-color-primary);
+    border-bottom-color: var(--dbm-color-primary);
+  }
+
+  /* Which page you are on, not just where you could go. */
+  .header__link[aria-current='page'] {
     color: var(--dbm-color-primary);
     border-bottom-color: var(--dbm-color-primary);
   }

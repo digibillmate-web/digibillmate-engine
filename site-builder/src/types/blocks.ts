@@ -22,6 +22,8 @@ export interface Cta {
 export interface NavLink {
   label: string;
   href: string;
+  /** Set by the export on the link pointing at the page being rendered. */
+  current?: boolean;
 }
 
 /** header_nav */
