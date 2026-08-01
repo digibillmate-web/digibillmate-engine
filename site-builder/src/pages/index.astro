@@ -34,8 +34,26 @@ if (found.length > 1) {
 }
 
 const [, site] = found[0]!;
+
+/**
+ * Browser tab title. The subdomain is a routing detail, not a name anyone
+ * would choose to read in a tab, so it is only the last resort:
+ *   1. an explicit seo-title from the theme
+ *   2. the header's business name, which is already the brand
+ *   3. the subdomain
+ */
+const headerContent = site.blocks.find((block) => block.type === 'header_nav')?.content as
+  | { businessName?: string }
+  | undefined;
+
+const title =
+  site.theme['--dbm-seo-title']?.trim() ||
+  headerContent?.businessName?.trim() ||
+  site.subdomain;
+
+const description = site.theme['--dbm-seo-description']?.trim() || undefined;
 ---
 
-<SiteLayout title={site.subdomain} theme={site.theme}>
+<SiteLayout title={title} description={description} theme={site.theme}>
   <BlockRenderer blocks={site.blocks} />
 </SiteLayout>

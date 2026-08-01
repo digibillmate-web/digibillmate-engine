@@ -17,9 +17,13 @@ const { title, description, theme } = Astro.props;
 const FAVICON_VAR = '--dbm-favicon-url';
 const faviconUrl = theme?.[FAVICON_VAR];
 
+// Theme keys that are metadata, not CSS values — they belong in <head> tags
+// rather than in the custom property block.
+const NON_CSS_VARS = new Set([FAVICON_VAR, '--dbm-seo-title', '--dbm-seo-description']);
+
 const themeStyle = theme
   ? Object.entries(theme)
-      .filter(([key]) => key !== FAVICON_VAR)
+      .filter(([key]) => !NON_CSS_VARS.has(key))
       .map(([key, value]) => `${key}: ${value};`)
       .join(' ')
   : undefined;

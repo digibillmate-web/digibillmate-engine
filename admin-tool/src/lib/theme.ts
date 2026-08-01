@@ -6,7 +6,7 @@
  * nothing in the database knows about CSS.
  */
 
-export type TokenKind = 'color' | 'font' | 'image';
+export type TokenKind = 'color' | 'font' | 'image' | 'text';
 
 export interface TokenSpec {
   key: string;
@@ -31,6 +31,18 @@ export const THEME_TOKENS: TokenSpec[] = [
     label: 'Favicon',
     kind: 'image',
     hint: 'Small square image shown in the browser tab',
+  },
+  {
+    key: 'seo-title',
+    label: 'Browser tab title',
+    kind: 'text',
+    hint: 'Shown in the tab and in search results. Defaults to the header business name.',
+  },
+  {
+    key: 'seo-description',
+    label: 'Search description',
+    kind: 'text',
+    hint: 'The summary search engines show under the title.',
   },
 ];
 

@@ -136,7 +136,7 @@ export default function ThemeForm({
                 </div>
               )}
 
-              {token.kind === 'font' && (
+              {(token.kind === 'font' || token.kind === 'text') && (
                 <input
                   id={`t-${token.key}`}
                   className="ef__input"
