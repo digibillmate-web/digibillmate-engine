@@ -100,11 +100,20 @@ export interface WhyChooseUsContent {
 }
 
 /** hero */
+export interface HeroSlide {
+  image: Image;
+  /** Optional destination when the whole slide is clickable. */
+  link?: string;
+}
+
 export interface HeroContent {
   eyebrow?: string;
   heading: string;
   subheading?: string;
+  /** Single banner image. Ignored when `slides` has entries. */
   image?: Image;
+  /** Two or more slides render as a rotating carousel. */
+  slides?: HeroSlide[];
   primaryCta?: Cta;
   secondaryCta?: Cta;
 }

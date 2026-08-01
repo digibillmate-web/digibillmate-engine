@@ -150,6 +150,20 @@ const CONTENT_MAPPERS = {
     ...(c.background_image
       ? { image: { src: c.background_image, alt: c.headline ?? '' } }
       : {}),
+    // Slides added by migration 0010. Entries without an image_url are
+    // dropped rather than rendered as a blank slide — an operator who added
+    // a row and has not uploaded to it yet should not get a gap in the
+    // rotation.
+    ...(Array.isArray(c.slides) && c.slides.some((s) => s?.image_url)
+      ? {
+          slides: c.slides
+            .filter((s) => s?.image_url)
+            .map((s) => ({
+              image: { src: s.image_url, alt: s.alt ?? c.headline ?? '' },
+              ...(s.link_url ? { link: s.link_url } : {}),
+            })),
+        }
+      : {}),
     ...(c.cta_label
       ? {
           primaryCta: {

@@ -3,14 +3,98 @@ import type { HeroContent } from '../../types/blocks';
 
 type Props = HeroContent;
 
-const { eyebrow, heading, subheading, image, primaryCta, secondaryCta } = Astro.props;
+const { eyebrow, heading, subheading, image, primaryCta, secondaryCta, slides } = Astro.props;
+
+/**
+ * Full-bleed banner, matching how these businesses actually lead their pages:
+ * the promotional artwork is the message, with the headline underneath rather
+ * than competing with it.
+ *
+ * Several slides rotate; one renders as a plain banner with no controls, so a
+ * site that has not been given carousel imagery does not show dead arrows.
+ */
+const carouselSlides =
+  slides && slides.length > 0
+    ? slides
+    : image
+      ? [{ image: { src: image.src, alt: image.alt } }]
+      : [];
+
+const isCarousel = carouselSlides.length > 1;
 ---
 
-<section class="hero dbm-section">
-  <div class="dbm-container hero__inner" class:list={[{ 'hero__inner--split': image }]}>
-    <div class="hero__body">
+<section class="hero" id="top">
+  {carouselSlides.length > 0 && (
+    <div
+      class="hero__carousel"
+      data-carousel={isCarousel ? 'true' : undefined}
+      aria-roledescription={isCarousel ? 'carousel' : undefined}
+      aria-label={isCarousel ? 'Promotions' : undefined}
+    >
+      <div class="hero__track">
+        {carouselSlides.map((slide, index) => (
+          <div
+            class="hero__slide"
+            data-slide-index={index}
+            aria-hidden={index === 0 ? undefined : 'true'}
+            aria-roledescription={isCarousel ? 'slide' : undefined}
+            aria-label={isCarousel ? `${index + 1} of ${carouselSlides.length}` : undefined}
+          >
+            {slide.link ? (
+              <a href={slide.link}>
+                <img
+                  src={slide.image.src}
+                  alt={slide.image.alt ?? ''}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  fetchpriority={index === 0 ? 'high' : undefined}
+                />
+              </a>
+            ) : (
+              <img
+                src={slide.image.src}
+                alt={slide.image.alt ?? ''}
+                loading={index === 0 ? 'eager' : 'lazy'}
+                fetchpriority={index === 0 ? 'high' : undefined}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {isCarousel && (
+        <>
+          <button class="hero__arrow hero__arrow--prev" type="button" aria-label="Previous slide">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <button class="hero__arrow hero__arrow--next" type="button" aria-label="Next slide">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+
+          <div class="hero__dots" role="tablist" aria-label="Choose slide">
+            {carouselSlides.map((_, index) => (
+              <button
+                class="hero__dot"
+                type="button"
+                role="tab"
+                data-dot-index={index}
+                aria-label={`Slide ${index + 1}`}
+                aria-selected={index === 0 ? 'true' : 'false'}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )}
+
+  {(heading || subheading || primaryCta || secondaryCta) && (
+    <div class="dbm-container hero__body">
       {eyebrow && <p class="hero__eyebrow">{eyebrow}</p>}
-      <h1 class="hero__heading">{heading}</h1>
+      {heading && <h1 class="hero__heading">{heading}</h1>}
       {subheading && <p class="hero__subheading">{subheading}</p>}
       {(primaryCta || secondaryCta) && (
         <div class="hero__actions">
@@ -23,23 +107,130 @@ const { eyebrow, heading, subheading, image, primaryCta, secondaryCta } = Astro.
         </div>
       )}
     </div>
-    {image && (
-      <div class="hero__media">
-        <img src={image.src} alt={image.alt} loading="eager" />
-      </div>
-    )}
-  </div>
+  )}
 </section>
 
 <style>
   .hero {
-    background: var(--dbm-color-surface);
+    background: var(--dbm-color-background);
   }
 
-  .hero__inner--split {
+  .hero__carousel {
+    position: relative;
+    overflow: hidden;
+    background: var(--dbm-color-secondary);
+  }
+
+  .hero__track {
     display: grid;
-    gap: var(--dbm-space-xl);
-    align-items: center;
+  }
+
+  /* Slides stack in one grid cell and cross-fade, so the carousel never
+     collapses to zero height between transitions. */
+  .hero__slide {
+    grid-area: 1 / 1;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+  }
+
+  /*
+   * A fixed ratio, not natural image height. Stacked slides otherwise size
+   * the cell to the tallest one, and every shorter slide shows a band of
+   * background beneath it. Clients upload whatever dimensions they have, so
+   * the banner cannot depend on them matching.
+   */
+  .hero__carousel[data-carousel='true'] .hero__slide {
+    aspect-ratio: 16 / 6;
+  }
+
+  .hero__carousel[data-carousel='true'] .hero__slide img,
+  .hero__carousel[data-carousel='true'] .hero__slide a {
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero__carousel[data-carousel='true'] .hero__slide img {
+    object-fit: cover;
+  }
+
+  .hero__slide[aria-hidden='true'] {
+    opacity: 0;
+  }
+
+  .hero__slide:not([aria-hidden='true']) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .hero__slide img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .hero__arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(0 0 0 / 0.35);
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .hero__arrow:hover,
+  .hero__arrow:focus-visible {
+    background: rgb(0 0 0 / 0.6);
+  }
+
+  .hero__arrow svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .hero__arrow--prev {
+    left: 12px;
+  }
+
+  .hero__arrow--next {
+    right: 12px;
+  }
+
+  .hero__dots {
+    position: absolute;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+  }
+
+  .hero__dot {
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.5);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .hero__dot[aria-selected='true'] {
+    background: #fff;
+    transform: scale(1.25);
+  }
+
+  .hero__body {
+    padding-block: var(--dbm-section-y);
+    text-align: center;
   }
 
   .hero__eyebrow {
@@ -62,24 +253,122 @@ const { eyebrow, heading, subheading, image, primaryCta, secondaryCta } = Astro.
     font-size: var(--dbm-text-lg);
     color: var(--dbm-color-text-muted);
     max-width: 55ch;
-    margin: 0 0 var(--dbm-space-lg);
+    margin: 0 auto var(--dbm-space-lg);
   }
 
   .hero__actions {
     display: flex;
     flex-wrap: wrap;
     gap: var(--dbm-space-sm);
+    justify-content: center;
   }
 
-  .hero__media img {
-    width: 100%;
-    border-radius: var(--dbm-radius-lg);
-    box-shadow: var(--dbm-shadow-md);
+  @media (max-width: 767px) {
+    /* A 16:6 letterbox is unreadably short on a phone. */
+    .hero__carousel[data-carousel='true'] .hero__slide {
+      aspect-ratio: 4 / 3;
+    }
+
+    .hero__arrow {
+      width: 36px;
+      height: 36px;
+    }
+
+    .hero__arrow svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .hero__arrow--prev {
+      left: 6px;
+    }
+
+    .hero__arrow--next {
+      right: 6px;
+    }
   }
 
-  @media (min-width: 768px) {
-    .hero__inner--split {
-      grid-template-columns: 1.1fr 1fr;
+  @media (prefers-reduced-motion: reduce) {
+    .hero__slide {
+      transition: none;
     }
   }
 </style>
+
+<script>
+  /**
+   * Carousel behaviour. Progressive enhancement: with JS disabled the first
+   * slide is already visible and the arrows simply do nothing, rather than the
+   * banner disappearing entirely.
+   */
+  const AUTOPLAY_MS = 5000;
+
+  document.querySelectorAll<HTMLElement>('[data-carousel="true"]').forEach((carousel) => {
+    const slides = Array.from(carousel.querySelectorAll<HTMLElement>('.hero__slide'));
+    const dots = Array.from(carousel.querySelectorAll<HTMLElement>('.hero__dot'));
+    if (slides.length < 2) return;
+
+    let current = 0;
+    let timer: number | undefined;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function show(next: number) {
+      current = (next + slides.length) % slides.length;
+
+      slides.forEach((slide, index) => {
+        if (index === current) slide.removeAttribute('aria-hidden');
+        else slide.setAttribute('aria-hidden', 'true');
+      });
+
+      dots.forEach((dot, index) => {
+        dot.setAttribute('aria-selected', index === current ? 'true' : 'false');
+      });
+    }
+
+    function start() {
+      // Auto-advancing against someone who has asked for reduced motion is
+      // exactly the kind of movement that setting is meant to stop.
+      if (reduceMotion) return;
+      stop();
+      timer = window.setInterval(() => show(current + 1), AUTOPLAY_MS);
+    }
+
+    function stop() {
+      if (timer !== undefined) window.clearInterval(timer);
+      timer = undefined;
+    }
+
+    carousel.querySelector('.hero__arrow--prev')?.addEventListener('click', () => {
+      show(current - 1);
+      start();
+    });
+
+    carousel.querySelector('.hero__arrow--next')?.addEventListener('click', () => {
+      show(current + 1);
+      start();
+    });
+
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        show(index);
+        start();
+      });
+    });
+
+    // Pause while the visitor is reading or interacting with the banner.
+    carousel.addEventListener('mouseenter', stop);
+    carousel.addEventListener('mouseleave', start);
+    carousel.addEventListener('focusin', stop);
+    carousel.addEventListener('focusout', start);
+
+    // A hidden tab should not be burning through slides.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop();
+      else start();
+    });
+
+    show(0);
+    start();
+  });
+</script>
