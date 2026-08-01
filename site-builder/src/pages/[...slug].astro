@@ -1,0 +1,119 @@
+---
+/**
+ * Every page of the exported site.
+ *
+ * The JSON carries a `pages` array; each entry becomes one static route.
+ * The home page has an empty slug and builds to /index.html, everything else
+ * to /<slug>/index.html.
+ */
+import SiteLayout from '../layouts/SiteLayout.astro';
+import BlockRenderer from '../components/BlockRenderer.astro';
+import type { ExportedSite, ExportedPage } from '../types/site';
+import type { BlockContent } from '../types/blocks';
+
+/**
+ * Blocks that belong to the whole site rather than to one page.
+ *
+ * Requiring an operator to add a header and footer to every page they create
+ * would mean the chrome drifts apart the first time one copy is edited. A page
+ * that has its own header or footer keeps it; otherwise it inherits the home
+ * page's.
+ */
+const CHROME_BEFORE = ['floating_contact_bar', 'header_nav'];
+const CHROME_AFTER = ['footer'];
+
+function isChrome(block: BlockContent) {
+  return CHROME_BEFORE.includes(block.type) || CHROME_AFTER.includes(block.type);
+}
+
+function pick(types: string[], page: ExportedPage) {
+  return page.blocks.filter((block) => types.includes(block.type));
+}
+
+function composePage(page: ExportedPage, home: ExportedPage): BlockContent[] {
+  const ownBefore = pick(CHROME_BEFORE, page);
+  const ownAfter = pick(CHROME_AFTER, page);
+
+  return [
+    ...(ownBefore.length > 0 ? ownBefore : pick(CHROME_BEFORE, home)),
+    ...page.blocks.filter((block) => !isChrome(block)),
+    ...(ownAfter.length > 0 ? ownAfter : pick(CHROME_AFTER, home)),
+  ];
+}
+
+export async function getStaticPaths() {
+  const exports = import.meta.glob<ExportedSite>('../data/sites/*.json', {
+    eager: true,
+    import: 'default',
+  });
+
+  const found = Object.entries(exports);
+
+  if (found.length === 0) {
+    throw new Error(
+      'No site export found in src/data/sites/. Run `npm run build:site` from the ' +
+        'repo root with SITE_ID set, or `npm run export:site -- <site_id>`.',
+    );
+  }
+
+  if (found.length > 1) {
+    throw new Error(
+      `Expected exactly one site export in src/data/sites/, found ${found.length}: ` +
+        `${found.map(([path]) => path).join(', ')}. One build renders one site — ` +
+        'remove the extras (`npm run build:site` clears the directory first).',
+    );
+  }
+
+  const [, site] = found[0]!;
+
+  if (!site.pages || site.pages.length === 0) {
+    throw new Error(
+      'The site export has no pages. Re-run the export after applying ' +
+        'supabase/migrations/0011_site_pages.sql.',
+    );
+  }
+
+  const home = site.pages.find((page) => page.slug === '') ?? site.pages[0]!;
+
+  return site.pages.map((page) => ({
+    // An empty slug must be undefined, not '', for Astro to emit /index.html.
+    params: { slug: page.slug || undefined },
+    props: { site, page, home },
+  }));
+}
+
+interface Props {
+  site: ExportedSite;
+  page: ExportedPage;
+  home: ExportedPage;
+}
+
+const { site, page, home } = Astro.props;
+
+/**
+ * Browser tab title. The subdomain is a routing detail, not a name anyone
+ * would choose to read in a tab, so it is only the last resort:
+ *   1. an explicit seo-title from the theme
+ *   2. the header's business name, which is already the brand
+ *   3. the subdomain
+ */
+const headerContent = home.blocks.find((block) => block.type === 'header_nav')?.content as
+  | { businessName?: string }
+  | undefined;
+
+const brand =
+  site.theme['--dbm-seo-title']?.trim() ||
+  headerContent?.businessName?.trim() ||
+  site.subdomain;
+
+// The home page is the brand; inner pages say what they are, then the brand.
+const title = page.slug === '' ? brand : `${page.title} — ${brand}`;
+
+const description = site.theme['--dbm-seo-description']?.trim() || undefined;
+
+const blocks = composePage(page, home);
+---
+
+<SiteLayout title={title} description={description} theme={site.theme}>
+  <BlockRenderer blocks={blocks} />
+</SiteLayout>

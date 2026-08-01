@@ -12,16 +12,19 @@ import { reorderBlocks, setBlockHidden, deleteBlock } from '@/app/sites/[siteId]
 
 export default function BlockControls({
   siteId,
+  pageId,
   blockId,
   blockName,
   isHidden,
   orderedIds,
 }: {
   siteId: string;
+  /** Positions are per page, so every action is scoped to one. */
+  pageId: string;
   blockId: string;
   blockName: string;
   isHidden: boolean;
-  /** Current order of every block on the site, hidden ones included. */
+  /** Current order of every block on this page, hidden ones included. */
   orderedIds: string[];
 }) {
   const router = useRouter();
@@ -49,7 +52,7 @@ export default function BlockControls({
     const target = index + delta;
     if (target < 0 || target >= next.length) return;
     [next[index], next[target]] = [next[target], next[index]];
-    run(() => reorderBlocks(siteId, next));
+    run(() => reorderBlocks(siteId, pageId, next));
   }
 
   return (
@@ -104,7 +107,7 @@ export default function BlockControls({
           ) {
             return;
           }
-          run(() => deleteBlock(siteId, blockId));
+          run(() => deleteBlock(siteId, pageId, blockId));
         }}
         disabled={pending}
         title="Delete this block and its content permanently"

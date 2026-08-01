@@ -9,6 +9,7 @@ import ThemeForm from '@/components/ThemeForm';
 import RenameSiteForm from '@/components/RenameSiteForm';
 import BlockControls from '@/components/BlockControls';
 import AddBlockBar, { type CatalogEntry } from '@/components/AddBlockBar';
+import PagesManager, { type PageRow } from '@/components/PagesManager';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
 import { effectiveTheme } from '@/lib/theme';
 
@@ -27,6 +28,7 @@ interface BlockDefinition {
 
 interface InstanceRow {
   id: string;
+  page_id: string;
   position: number;
   content: unknown;
   content_draft: unknown;
@@ -39,10 +41,10 @@ export default async function SiteEditorPage({
   searchParams,
 }: {
   params: Promise<{ siteId: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; page?: string }>;
 }) {
   const { siteId } = await params;
-  const { tab } = await searchParams;
+  const { tab, page: pageParam } = await searchParams;
   const active: Tab = tab === 'theme' || tab === 'settings' ? tab : 'content';
 
   const supabase = await createClient();
@@ -63,20 +65,40 @@ export default async function SiteEditorPage({
     }
   ).archetypes;
 
-  const [{ data: blockRows, error }, { data: hook }, { data: definitions }] = await Promise.all([
-    supabase
-      .from('block_instances')
-      .select(
-        'id, position, content, content_draft, is_hidden, block_definitions(id, key, name, description, schema, client_editable_fields)',
-      )
-      .eq('site_id', siteId)
-      .order('position', { ascending: true }),
-    // Admin-only table: a non-admin session simply gets no row back.
-    supabase.from('site_deploy_hooks').select('url').eq('site_id', siteId).maybeSingle(),
-    supabase.from('block_definitions').select('id, key, name').order('name'),
-  ]);
+  const [{ data: blockRows, error }, { data: hook }, { data: definitions }, { data: pageRows }] =
+    await Promise.all([
+      supabase
+        .from('block_instances')
+        .select(
+          'id, page_id, position, content, content_draft, is_hidden, block_definitions(id, key, name, description, schema, client_editable_fields)',
+        )
+        .eq('site_id', siteId)
+        .order('position', { ascending: true }),
+      // Admin-only table: a non-admin session simply gets no row back.
+      supabase.from('site_deploy_hooks').select('url').eq('site_id', siteId).maybeSingle(),
+      supabase.from('block_definitions').select('id, key, name').order('name'),
+      supabase
+        .from('site_pages')
+        .select('id, slug, title, show_in_nav, position')
+        .eq('site_id', siteId)
+        .order('position', { ascending: true }),
+    ]);
 
-  const blocks = (blockRows ?? []) as unknown as InstanceRow[];
+  const allBlocks = (blockRows ?? []) as unknown as InstanceRow[];
+
+  const pages: PageRow[] = (pageRows ?? []).map((row) => ({
+    id: row.id as string,
+    slug: (row.slug as string) ?? '',
+    title: row.title as string,
+    show_in_nav: row.show_in_nav !== false,
+    blockCount: allBlocks.filter((b) => b.page_id === row.id).length,
+  }));
+
+  // Editing is always scoped to one page: ?page=<id>, defaulting to home.
+  const activePage = pages.find((p) => p.id === pageParam) ?? pages[0];
+  const activePageId = activePage?.id ?? '';
+
+  const blocks = allBlocks.filter((block) => block.page_id === activePageId);
   const orderedIds = blocks.map((block) => block.id);
   const usedDefinitionIds = new Set(blocks.map((b) => b.block_definitions?.id));
 
@@ -169,8 +191,17 @@ export default async function SiteEditorPage({
 
         {active === 'content' && (
           <>
+            <PagesManager siteId={siteId} pages={pages} activePageId={activePageId} />
+
+            {activePage && (
+              <p className="pages__editing">
+                Editing blocks on <strong>{activePage.title}</strong>{' '}
+                <code>/{activePage.slug}</code>
+              </p>
+            )}
+
             <div className="card addblock-card">
-              <AddBlockBar siteId={siteId} catalog={catalog} />
+              <AddBlockBar siteId={siteId} pageId={activePageId} catalog={catalog} />
             </div>
 
             {hiddenCount > 0 && (
@@ -182,7 +213,7 @@ export default async function SiteEditorPage({
 
             {blocks.length === 0 && !error && (
               <div className="card empty">
-                This site has no blocks. Add one above.
+                This page has no blocks yet. Add one above.
               </div>
             )}
 
@@ -210,6 +241,7 @@ export default async function SiteEditorPage({
 
                     <BlockControls
                       siteId={siteId}
+                      pageId={activePageId}
                       blockId={block.id}
                       blockName={definition?.name ?? 'this block'}
                       isHidden={block.is_hidden}

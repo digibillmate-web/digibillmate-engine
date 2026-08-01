@@ -284,6 +284,24 @@ async function main() {
     ? toCssVars(archetype?.default_theme)
     : { ...toCssVars(archetype?.default_theme), ...toCssVars(site.theme) };
 
+  // --- Pages ----------------------------------------------------------------
+
+  const { data: pageRows, error: pageError } = await supabase
+    .from('site_pages')
+    .select('id, slug, title, nav_label, position, show_in_nav')
+    .eq('site_id', site.id)
+    .order('position', { ascending: true });
+
+  if (pageError) fail(`Could not load site pages: ${pageError.message}`);
+
+  if (!pageRows || pageRows.length === 0) {
+    fail(
+      `Site ${siteId} has no rows in site_pages — nothing to render. ` +
+        'Every site needs at least a home page (see ' +
+        'supabase/migrations/0011_site_pages.sql).',
+    );
+  }
+
   // --- Blocks ---------------------------------------------------------------
 
   // Always block_instances, never archetype_blocks. The archetype supplies a
@@ -295,24 +313,14 @@ async function main() {
   // built site — that is the whole difference between hiding and deleting.
   const { data: instanceRows, error: instanceError } = await supabase
     .from('block_instances')
-    .select('position, content, content_draft, settings, block_definitions(key, name)')
+    .select('page_id, position, content, content_draft, settings, block_definitions(key, name)')
     .eq('site_id', site.id)
     .eq('is_hidden', false)
     .order('position', { ascending: true });
 
   if (instanceError) fail(`Could not load block instances: ${instanceError.message}`);
 
-  // An empty result means the site was never backfilled. Exporting zero blocks
-  // would build a blank page and report success, so refuse instead.
-  if (instanceRows.length === 0) {
-    fail(
-      `Site ${siteId} has no rows in block_instances — nothing to render. ` +
-        'A site created from an archetype needs its composition copied into ' +
-        'block_instances first (see supabase/migrations/0005_backfill_block_instances.sql).',
-    );
-  }
-
-  const blocks = instanceRows.map((row) => ({
+  const toBlock = (row) => ({
     type: row.block_definitions?.key,
     // --draft previews unpublished edits; a null draft falls back to published.
     content: mapContent(
@@ -322,12 +330,36 @@ async function main() {
     ...(row.settings && Object.keys(row.settings).length > 0
       ? { settings: row.settings }
       : {}),
-  }));
+  });
 
-  const unresolved = blocks.filter((block) => !block.type);
+  const unresolved = (instanceRows ?? []).filter((row) => !row.block_definitions?.key);
   if (unresolved.length > 0) {
     fail(`${unresolved.length} block(s) have no block_definitions.key — check the join`);
   }
+
+  const pages = pageRows.map((page) => ({
+    slug: page.slug ?? '',
+    title: page.title,
+    navLabel: page.nav_label || page.title,
+    showInNav: page.show_in_nav !== false,
+    blocks: (instanceRows ?? [])
+      .filter((row) => row.page_id === page.id)
+      .map(toBlock),
+  }));
+
+  // A site whose home page has no blocks would build a blank index and report
+  // success. Empty secondary pages are a legitimate work-in-progress; an empty
+  // home page is not.
+  const home = pages.find((page) => page.slug === '') ?? pages[0];
+  if (!home || home.blocks.length === 0) {
+    fail(
+      `Site ${siteId} has no blocks on its home page — nothing to render. ` +
+        'Add blocks to it in the admin portal, or check that block_instances ' +
+        'rows carry the right page_id.',
+    );
+  }
+
+  const totalBlocks = pages.reduce((sum, page) => sum + page.blocks.length, 0);
 
   // --- Write ----------------------------------------------------------------
 
@@ -337,7 +369,7 @@ async function main() {
     customDomain: site.custom_domain ?? null,
     status: site.status,
     theme,
-    blocks,
+    pages,
     meta: {
       archetypeId: site.archetype_id ?? null,
       archetypeKey: archetype?.key ?? null,
@@ -356,9 +388,13 @@ async function main() {
   await writeFile(outPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
 
   console.log(
-    `✔ Exported ${blocks.length} block(s) for "${site.subdomain ?? site.id}"` +
-      `${draft ? ' (draft)' : ''} → ${outPath}`,
+    `✔ Exported ${pages.length} page(s), ${totalBlocks} block(s) for ` +
+      `"${site.subdomain ?? site.id}"${draft ? ' (draft)' : ''} → ${outPath}`,
   );
+
+  for (const page of pages) {
+    console.log(`    /${page.slug}${page.slug ? '' : ' (home)'} — ${page.blocks.length} block(s)`);
+  }
 }
 
 main().catch((error) => fail(error.stack ?? String(error)));

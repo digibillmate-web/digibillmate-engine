@@ -7,6 +7,16 @@
  */
 import type { BlockContent } from './blocks';
 
+export interface ExportedPage {
+  /** '' is the home page, which builds to /index.html. */
+  slug: string;
+  title: string;
+  navLabel: string;
+  showInNav: boolean;
+  /** Ordered by `position`. */
+  blocks: BlockContent[];
+}
+
 export interface ExportedSite {
   id: string;
   subdomain: string;
@@ -14,8 +24,8 @@ export interface ExportedSite {
   status: string;
   /** Resolved CSS custom properties, already prefixed (--dbm-*). */
   theme: Record<string, string>;
-  /** Ordered by `position`. */
-  blocks: BlockContent[];
+  /** Ordered by `position`; the first is the home page. */
+  pages: ExportedPage[];
   meta: {
     archetypeId: string | null;
     archetypeKey: string | null;

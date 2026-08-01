@@ -58,15 +58,18 @@ async function requireUser(supabase: SupabaseClient) {
  */
 export async function reorderBlocks(
   siteId: string,
+  pageId: string,
   orderedBlockIds: string[],
 ): Promise<BlockActionResult> {
   const supabase = await createClient();
   if (!(await requireUser(supabase))) return { ok: false, error: 'Not signed in.' };
 
+  // Scoped to the page: positions are per page since 0011, and reordering
+  // against the whole site would renumber other pages' blocks too.
   const { data: existing, error: readError } = await supabase
     .from('block_instances')
-    .select('id, block_definition_id, site_id')
-    .eq('site_id', siteId);
+    .select('id, block_definition_id, site_id, page_id')
+    .eq('page_id', pageId);
 
   if (readError) return { ok: false, error: readError.message };
 
@@ -86,6 +89,7 @@ export async function reorderBlocks(
   const rows = orderedBlockIds.map((id, index) => ({
     id,
     site_id: siteId,
+    page_id: pageId,
     block_definition_id: byId.get(id)!.block_definition_id,
     position: index + 1,
   }));
@@ -129,9 +133,12 @@ export async function setBlockHidden(
 export async function addBlock(
   siteId: string,
   blockDefinitionId: string,
+  pageId: string,
 ): Promise<BlockActionResult> {
   const supabase = await createClient();
   if (!(await requireUser(supabase))) return { ok: false, error: 'Not signed in.' };
+
+  if (!pageId) return { ok: false, error: 'No page selected to add the block to.' };
 
   const { data: definition, error: defError } = await supabase
     .from('block_definitions')
@@ -141,10 +148,11 @@ export async function addBlock(
 
   if (defError || !definition) return { ok: false, error: 'That block type no longer exists.' };
 
+  // Position is per page, so the next slot comes from this page's blocks.
   const { data: last } = await supabase
     .from('block_instances')
     .select('position')
-    .eq('site_id', siteId)
+    .eq('page_id', pageId)
     .order('position', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -153,6 +161,7 @@ export async function addBlock(
 
   const { error } = await supabase.from('block_instances').insert({
     site_id: siteId,
+    page_id: pageId,
     block_definition_id: definition.id,
     position: nextPosition,
     content: emptyContentFromSchema(definition.schema),
@@ -171,7 +180,11 @@ export async function addBlock(
  * Offered alongside hiding, not instead of it: hiding is the reversible
  * default, this is for blocks an operator is certain they will never want.
  */
-export async function deleteBlock(siteId: string, blockId: string): Promise<BlockActionResult> {
+export async function deleteBlock(
+  siteId: string,
+  pageId: string,
+  blockId: string,
+): Promise<BlockActionResult> {
   const supabase = await createClient();
   if (!(await requireUser(supabase))) return { ok: false, error: 'Not signed in.' };
 
@@ -187,11 +200,12 @@ export async function deleteBlock(siteId: string, blockId: string): Promise<Bloc
     return { ok: false, error: 'Nothing was deleted — the block may already be gone.' };
   }
 
-  // Renumber what is left so positions stay 1..n with no holes.
+  // Renumber what is left so positions stay 1..n with no holes — within this
+  // page only, since positions are per page.
   const { data: remaining } = await supabase
     .from('block_instances')
     .select('id, block_definition_id')
-    .eq('site_id', siteId)
+    .eq('page_id', pageId)
     .order('position', { ascending: true });
 
   if (remaining && remaining.length > 0) {
@@ -199,6 +213,7 @@ export async function deleteBlock(siteId: string, blockId: string): Promise<Bloc
       remaining.map((row, index) => ({
         id: row.id,
         site_id: siteId,
+        page_id: pageId,
         block_definition_id: row.block_definition_id,
         position: index + 1,
       })),

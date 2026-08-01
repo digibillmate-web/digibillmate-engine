@@ -579,6 +579,99 @@ table.data tbody tr:hover {
   color: var(--admin-text-muted);
 }
 
+/* --- Pages ------------------------------------------------------------ */
+
+.pages {
+  padding: 1rem 1.15rem 1.15rem;
+  margin-bottom: 1rem;
+}
+
+.pages__head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.pages__head .settings-card__title {
+  margin: 0;
+}
+
+.pages__head > :last-child {
+  margin-left: auto;
+}
+
+.pages__new,
+.pages__edit {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: #fafbfc;
+  margin-bottom: 0.85rem;
+}
+
+.pages__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.pages__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+}
+
+.pages__item.is-active {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 1px var(--admin-primary) inset;
+}
+
+.pages__link {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.pages__title {
+  font-weight: 600;
+}
+
+.pages__slug {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+.pages__meta {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  margin-left: auto;
+}
+
+.pages__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.pages__editing {
+  margin: 0 0 0.85rem;
+  font-size: 0.85rem;
+  color: var(--admin-text-muted);
+}
+
 /* --- Block composition controls --------------------------------------- */
 
 .addblock-card {

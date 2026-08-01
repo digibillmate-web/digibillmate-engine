@@ -21,9 +21,12 @@ export interface CatalogEntry {
 
 export default function AddBlockBar({
   siteId,
+  pageId,
   catalog,
 }: {
   siteId: string;
+  /** Blocks belong to a page, so the target page is explicit. */
+  pageId: string;
   catalog: CatalogEntry[];
 }) {
   const router = useRouter();
@@ -35,7 +38,7 @@ export default function AddBlockBar({
     if (!selected) return;
     setError(null);
     startTransition(async () => {
-      const result = await addBlock(siteId, selected);
+      const result = await addBlock(siteId, selected, pageId);
       if (!result.ok) {
         setError(result.error ?? 'Could not add the block.');
         return;
@@ -69,7 +72,8 @@ export default function AddBlockBar({
       </div>
 
       <p className="newsite__hint">
-        Added at the end, empty, ready to fill in. This forks the site from its archetype.
+        Added to the end of the page you are editing, empty and ready to fill in. This forks the
+        site from its archetype.
       </p>
 
       {error && (
