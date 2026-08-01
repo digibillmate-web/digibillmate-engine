@@ -8,40 +8,124 @@
 
 export type TokenKind = 'color' | 'font' | 'image' | 'text';
 
+export type TokenGroup = 'Brand' | 'Page' | 'Typography' | 'Site';
+
 export interface TokenSpec {
   key: string;
   label: string;
   kind: TokenKind;
+  group: TokenGroup;
   hint?: string;
 }
 
+export const TOKEN_GROUPS: TokenGroup[] = ['Brand', 'Page', 'Typography', 'Site'];
+
 /**
- * The tokens the site-builder components actually consume. Kept in this order
- * because it reads as a hierarchy: brand colour first, surfaces after.
+ * The tokens the site-builder components actually consume.
+ *
+ * Every one of these is read by a component through a --dbm-* custom
+ * property. Adding a token here without a component reading it produces a
+ * control that appears to do nothing, so the list is deliberately not a
+ * superset of "colours we could imagine offering".
  */
 export const THEME_TOKENS: TokenSpec[] = [
-  { key: 'color-primary', label: 'Primary', kind: 'color', hint: 'Buttons, prices, accents' },
-  { key: 'color-secondary', label: 'Secondary', kind: 'color', hint: 'Footer, dark surfaces' },
-  { key: 'color-background', label: 'Background', kind: 'color', hint: 'Page background' },
-  { key: 'color-text', label: 'Text', kind: 'color', hint: 'Body copy' },
-  { key: 'font-heading', label: 'Heading font', kind: 'font', hint: 'e.g. Poppins, sans-serif' },
-  { key: 'font-body', label: 'Body font', kind: 'font', hint: 'e.g. Inter, sans-serif' },
+  // --- Brand -------------------------------------------------------------
+  {
+    key: 'color-primary',
+    label: 'Primary',
+    kind: 'color',
+    group: 'Brand',
+    hint: 'Buttons, prices, links, accents',
+  },
+  {
+    key: 'color-primary-contrast',
+    label: 'Text on primary',
+    kind: 'color',
+    group: 'Brand',
+    hint: 'Button label colour — keep it readable against Primary',
+  },
+  {
+    key: 'color-secondary',
+    label: 'Secondary',
+    kind: 'color',
+    group: 'Brand',
+    hint: 'Footer and other dark surfaces',
+  },
+  {
+    key: 'color-secondary-contrast',
+    label: 'Text on secondary',
+    kind: 'color',
+    group: 'Brand',
+    hint: 'Footer text colour',
+  },
+
+  // --- Page --------------------------------------------------------------
+  {
+    key: 'color-background',
+    label: 'Background',
+    kind: 'color',
+    group: 'Page',
+    hint: 'Main page background',
+  },
+  {
+    key: 'color-surface',
+    label: 'Surface',
+    kind: 'color',
+    group: 'Page',
+    hint: 'Alternating section bands and cards',
+  },
+  {
+    key: 'color-border',
+    label: 'Border',
+    kind: 'color',
+    group: 'Page',
+    hint: 'Card outlines and dividers',
+  },
+  { key: 'color-text', label: 'Text', kind: 'color', group: 'Page', hint: 'Body copy' },
+  {
+    key: 'color-text-muted',
+    label: 'Muted text',
+    kind: 'color',
+    group: 'Page',
+    hint: 'Descriptions, captions, secondary copy',
+  },
+
+  // --- Typography ---------------------------------------------------------
+  {
+    key: 'font-heading',
+    label: 'Heading font',
+    kind: 'font',
+    group: 'Typography',
+    hint: 'Headings and the logo text',
+  },
+  {
+    key: 'font-body',
+    label: 'Body font',
+    kind: 'font',
+    group: 'Typography',
+    hint: 'Paragraphs, buttons and navigation',
+  },
+
+  // --- Site ---------------------------------------------------------------
   {
     key: 'favicon-url',
     label: 'Favicon',
     kind: 'image',
+    group: 'Site',
     hint: 'Small square image shown in the browser tab',
   },
   {
     key: 'seo-title',
     label: 'Browser tab title',
     kind: 'text',
+    group: 'Site',
     hint: 'Shown in the tab and in search results. Defaults to the header business name.',
   },
   {
     key: 'seo-description',
     label: 'Search description',
     kind: 'text',
+    group: 'Site',
     hint: 'The summary search engines show under the title.',
   },
 ];

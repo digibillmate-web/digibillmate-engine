@@ -114,6 +114,14 @@ export default function FieldInput({
           </span>
         </legend>
 
+        {/* An empty array otherwise renders as a bare "0 items", which reads
+            as a disabled field rather than as something to fill in. */}
+        {items.length === 0 && (
+          <p className="ef__emptyarray">
+            No {field.label.toLowerCase()} yet — use the button below to add the first one.
+          </p>
+        )}
+
         <ol className="ef__items">
           {items.map((item, index) => (
             <li className="ef__item" key={index}>

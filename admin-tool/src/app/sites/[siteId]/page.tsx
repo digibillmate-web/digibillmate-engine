@@ -179,7 +179,11 @@ export default async function SiteEditorPage({
 
         {active === 'settings' && (
           <>
-            <RenameSiteForm siteId={siteId} initialName={site.name} />
+            <RenameSiteForm
+              siteId={siteId}
+              initialName={site.name}
+              initialSubdomain={site.subdomain ?? ''}
+            />
             <PublishButton
               siteId={siteId}
               siteStatus={site.status}
@@ -219,7 +223,10 @@ export default async function SiteEditorPage({
 
             {blocks.map((block) => {
               const definition = block.block_definitions;
-              const fields = schemaToFields(definition?.schema);
+              const fields = schemaToFields(
+                definition?.schema,
+                definition?.client_editable_fields ?? [],
+              );
               const unmapped = unmappedKeys(block.content, fields);
 
               return (

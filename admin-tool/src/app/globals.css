@@ -741,6 +741,14 @@ table.data tbody tr:hover {
   top: 1rem;
 }
 
+.themegroup {
+  margin-bottom: 1.1rem;
+}
+
+.themegroup .ef:last-child {
+  margin-bottom: 0;
+}
+
 .themetoken__row {
   display: flex;
   gap: 0.5rem;
@@ -1054,6 +1062,12 @@ textarea.ef__input {
 .ef__count {
   margin-left: 0.5rem;
   font-weight: 400;
+  color: var(--admin-text-muted);
+}
+
+.ef__emptyarray {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
   color: var(--admin-text-muted);
 }
 

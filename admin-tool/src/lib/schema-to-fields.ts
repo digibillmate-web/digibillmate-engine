@@ -125,10 +125,29 @@ function fieldsFromProperties(schema: JsonSchema, basePath: string): Field[] {
   );
 }
 
-/** Top-level entry point: the fields of one block's content object. */
-export function schemaToFields(schema: unknown): Field[] {
+/**
+ * Top-level entry point: the fields of one block's content object.
+ *
+ * `preferredOrder` fixes the field order. Postgres does not preserve jsonb key
+ * order — it stores keys by length then alphabetically — so without this the
+ * form order is effectively arbitrary, and important fields can end up below
+ * incidental ones. block_definitions.client_editable_fields is a genuine
+ * ordered array listing the fields that matter most, so it doubles as the
+ * display order; anything it omits follows, in whatever order it arrives.
+ */
+export function schemaToFields(schema: unknown, preferredOrder: string[] = []): Field[] {
   if (!schema || typeof schema !== 'object') return [];
-  return fieldsFromProperties(schema as JsonSchema, '');
+
+  const fields = fieldsFromProperties(schema as JsonSchema, '');
+  if (preferredOrder.length === 0) return fields;
+
+  const rank = new Map(preferredOrder.map((name, index) => [name, index]));
+
+  return [...fields].sort((a, b) => {
+    const ra = rank.get(a.name) ?? Number.MAX_SAFE_INTEGER;
+    const rb = rank.get(b.name) ?? Number.MAX_SAFE_INTEGER;
+    return ra - rb;
+  });
 }
 
 /**

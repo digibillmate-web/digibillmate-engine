@@ -13,10 +13,12 @@ import { saveTheme, relinkTheme } from '@/app/sites/[siteId]/theme-actions';
 import ImageField from '@/components/fields/ImageField';
 import {
   THEME_TOKENS,
+  TOKEN_GROUPS,
   primaryFamily,
   toColorInputValue,
   type ThemeValues,
 } from '@/lib/theme';
+import { FONT_OPTIONS, FONT_GROUPS, isKnownFont } from '@/lib/fonts';
 
 export default function ThemeForm({
   siteId,
@@ -105,61 +107,101 @@ export default function ThemeForm({
           </div>
         )}
 
-        {THEME_TOKENS.map((token) => {
-          const raw = values[token.key] ?? '';
-          const picker = token.kind === 'color' ? toColorInputValue(raw) : null;
-          const changed = changedKeys.includes(token.key);
+        {TOKEN_GROUPS.map((group) => {
+          const tokens = THEME_TOKENS.filter((token) => token.group === group);
+          if (tokens.length === 0) return null;
 
           return (
-            <div className="ef" key={token.key}>
-              <label className="ef__label" htmlFor={`t-${token.key}`}>
-                {token.label}
-                {changed && <span className="themetoken__changed">changed</span>}
-              </label>
+            <fieldset className="ef ef--object themegroup" key={group}>
+              <legend className="ef__legend">{group}</legend>
 
-              {token.kind === 'color' && (
-                <div className="themetoken__row">
-                  <input
-                    type="color"
-                    className="themetoken__swatch"
-                    aria-label={`${token.label} colour picker`}
-                    value={picker ?? '#000000'}
-                    onChange={(e) => set(token.key, e.target.value)}
-                  />
-                  <input
-                    id={`t-${token.key}`}
-                    className="ef__input"
-                    value={raw}
-                    placeholder="#c0392b"
-                    onChange={(e) => set(token.key, e.target.value)}
-                  />
-                </div>
-              )}
+              {tokens.map((token) => {
+                const raw = values[token.key] ?? '';
+                const picker = token.kind === 'color' ? toColorInputValue(raw) : null;
+                const changed = changedKeys.includes(token.key);
+                // A stored font that is not one of the bundled families would
+                // vanish from a plain <select>, so it is offered explicitly.
+                const unknownFont = token.kind === 'font' && raw && !isKnownFont(raw);
 
-              {(token.kind === 'font' || token.kind === 'text') && (
-                <input
-                  id={`t-${token.key}`}
-                  className="ef__input"
-                  value={raw}
-                  placeholder={token.hint}
-                  onChange={(e) => set(token.key, e.target.value)}
-                />
-              )}
+                return (
+                  <div className="ef" key={token.key}>
+                    <label className="ef__label" htmlFor={`t-${token.key}`}>
+                      {token.label}
+                      {changed && <span className="themetoken__changed">changed</span>}
+                    </label>
 
-              {token.kind === 'image' && (
-                <ImageField
-                  id={`t-${token.key}`}
-                  value={raw}
-                  uploadPrefix={`${siteId}/theme`}
-                  onChange={(next) => set(token.key, next)}
-                />
-              )}
+                    {token.kind === 'color' && (
+                      <div className="themetoken__row">
+                        <input
+                          type="color"
+                          className="themetoken__swatch"
+                          aria-label={`${token.label} colour picker`}
+                          value={picker ?? '#000000'}
+                          onChange={(e) => set(token.key, e.target.value)}
+                        />
+                        <input
+                          id={`t-${token.key}`}
+                          className="ef__input"
+                          value={raw}
+                          placeholder="#c0392b"
+                          onChange={(e) => set(token.key, e.target.value)}
+                        />
+                      </div>
+                    )}
 
-              <p className="newsite__hint">
-                {token.hint}
-                {token.kind === 'color' && !picker && raw && ' · not a hex value, picker disabled'}
-              </p>
-            </div>
+                    {token.kind === 'font' && (
+                      <select
+                        id={`t-${token.key}`}
+                        className="ef__input"
+                        value={raw}
+                        style={{ fontFamily: raw || undefined }}
+                        onChange={(e) => set(token.key, e.target.value)}
+                      >
+                        {!raw && <option value="">Choose a font…</option>}
+                        {unknownFont && <option value={raw}>{raw} (not bundled)</option>}
+                        {FONT_GROUPS.map((fontGroup) => (
+                          <optgroup label={fontGroup} key={fontGroup}>
+                            {FONT_OPTIONS.filter((f) => f.group === fontGroup).map((font) => (
+                              <option value={font.value} key={font.value}>
+                                {font.label}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                    )}
+
+                    {token.kind === 'text' && (
+                      <input
+                        id={`t-${token.key}`}
+                        className="ef__input"
+                        value={raw}
+                        placeholder={token.hint}
+                        onChange={(e) => set(token.key, e.target.value)}
+                      />
+                    )}
+
+                    {token.kind === 'image' && (
+                      <ImageField
+                        id={`t-${token.key}`}
+                        value={raw}
+                        uploadPrefix={`${siteId}/theme`}
+                        onChange={(next) => set(token.key, next)}
+                      />
+                    )}
+
+                    <p className="newsite__hint">
+                      {token.hint}
+                      {token.kind === 'color' &&
+                        !picker &&
+                        raw &&
+                        ' · not a hex value, picker disabled'}
+                      {unknownFont && ' · this family is not self-hosted, so the site falls back'}
+                    </p>
+                  </div>
+                );
+              })}
+            </fieldset>
           );
         })}
 
