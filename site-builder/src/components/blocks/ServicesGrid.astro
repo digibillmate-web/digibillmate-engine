@@ -20,7 +20,7 @@ function formatPrice(price: string | number): string {
   <div class="dbm-container">
     <h2 class="dbm-heading">{heading}</h2>
     {intro && <p class="dbm-intro">{intro}</p>}
-    <CardRail label="Services">
+    <CardRail label="Services" autoplay>
       {services.map((service) => (
         <li class="services__card">
           {service.image ? (
