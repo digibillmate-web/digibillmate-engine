@@ -215,6 +215,15 @@ const CONTENT_MAPPERS = {
     })),
   }),
 
+  page_banner: (c) => ({
+    title: c.title ?? '',
+    subtitle: c.subtitle,
+    ...(c.background_image
+      ? { image: { src: c.background_image, alt: c.title ?? '' } }
+      : {}),
+    showBreadcrumb: c.show_breadcrumb !== false,
+  }),
+
   enquiry_form: (c) => ({
     title: c.title,
     intro: c.intro,

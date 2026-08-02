@@ -101,6 +101,34 @@ img {
   color: inherit;
 }
 
+/*
+ * Scroll reveal.
+ *
+ * Sections start slightly lowered and transparent, then settle as they come
+ * into view. The hidden state is only applied once JS has confirmed it can
+ * reveal things again (html.has-reveal), so with JS disabled or broken the
+ * content is simply visible rather than permanently invisible.
+ */
+.has-reveal [data-reveal]:not(.is-revealed) {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+[data-reveal] {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .has-reveal [data-reveal]:not(.is-revealed) {
+    opacity: 1;
+    transform: none;
+  }
+
+  [data-reveal] {
+    transition: none;
+  }
+}
+
 /* Shared primitives used by every block. */
 .dbm-section {
   padding-block: var(--dbm-section-y);

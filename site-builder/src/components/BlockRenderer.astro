@@ -55,10 +55,19 @@ function backgroundClass(settings: unknown): string | undefined {
     const Block = Component as any;
     const wrapper = backgroundClass((block as { settings?: unknown }).settings);
 
-    // Only wrapped when a background is actually chosen, so the default output
-    // stays exactly as it was rather than gaining an empty div everywhere.
+    // Chrome is present on every page and sits outside the reading flow, so
+    // fading it in would delay the header on each navigation for no gain.
+    const isChrome = ['header_nav', 'footer', 'floating_contact_bar'].includes(block.type);
+    const reveal = isChrome ? undefined : true;
+
+    // Only wrapped when a background is chosen, so the default output stays as
+    // it was rather than gaining an empty div everywhere.
     return wrapper ? (
-      <div class={wrapper}>
+      <div class={wrapper} data-reveal={reveal}>
+        <Block {...block.content} />
+      </div>
+    ) : reveal ? (
+      <div data-reveal>
         <Block {...block.content} />
       </div>
     ) : (

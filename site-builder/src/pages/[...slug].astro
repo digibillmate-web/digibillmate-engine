@@ -40,7 +40,32 @@ function composePage(page: ExportedPage, home: ExportedPage): BlockContent[] {
     ...(ownAfter.length > 0 ? ownAfter : pick(CHROME_AFTER, home)),
   ];
 
-  return blocks.map((block) => markCurrentNav(block, page));
+  return blocks.map((block) => fillPageBanner(markCurrentNav(block, page), page));
+}
+
+/**
+ * Fills a page banner's title and breadcrumb from the page it sits on.
+ *
+ * Done here for the same reason as the nav's current marker: the page is only
+ * known at render time. It also means adding a banner to a new page needs no
+ * retyping, and a page renamed later cannot leave a stale title behind.
+ */
+function fillPageBanner(block: BlockContent, page: ExportedPage): BlockContent {
+  if (block.type !== 'page_banner') return block;
+
+  const title = block.content.title?.trim() || page.title;
+
+  return {
+    ...block,
+    content: {
+      ...block.content,
+      title,
+      breadcrumb: [
+        { label: 'Home', href: '/' },
+        { label: page.navLabel || page.title },
+      ],
+    },
+  };
 }
 
 /**

@@ -11,6 +11,7 @@ import AboutSection from './AboutSection.astro';
 import BrandLogos from './BrandLogos.astro';
 import WhyChooseUs from './WhyChooseUs.astro';
 import EnquiryForm from './EnquiryForm.astro';
+import PageBanner from './PageBanner.astro';
 import Hero from './Hero.astro';
 import ServicesGrid from './ServicesGrid.astro';
 import PricingOffers from './PricingOffers.astro';
@@ -27,6 +28,7 @@ export const blockRegistry = {
   brand_logos: BrandLogos,
   why_choose_us: WhyChooseUs,
   enquiry_form: EnquiryForm,
+  page_banner: PageBanner,
   hero: Hero,
   services_grid: ServicesGrid,
   pricing_offers: PricingOffers,
@@ -43,6 +45,7 @@ export {
   BrandLogos,
   WhyChooseUs,
   EnquiryForm,
+  PageBanner,
   Hero,
   ServicesGrid,
   PricingOffers,

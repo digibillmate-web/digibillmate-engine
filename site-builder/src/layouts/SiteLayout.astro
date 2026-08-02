@@ -47,5 +47,70 @@ const themeStyle = theme
     <main>
       <slot />
     </main>
+
+    <script>
+      /**
+       * Reveals sections as they scroll into view.
+       *
+       * Two mechanisms on purpose, because the failure here is content that
+       * stays permanently invisible:
+       *
+       *  - The hiding class is added by JS, never in the markup, so a script
+       *    that never runs leaves the page fully visible rather than blank.
+       *  - An observer handles the normal case, and a sweep catches anything
+       *    the observer missed. A fast wheel scroll or an anchor jump can move
+       *    past a section between frames without it ever intersecting, and
+       *    that section would otherwise never appear again.
+       */
+      const root = document.documentElement;
+      const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'));
+
+      if (targets.length > 0) {
+        root.classList.add('has-reveal');
+
+        const reveal = (el: Element) => el.classList.add('is-revealed');
+
+        // Anything at or above the fold has been reached, whether or not the
+        // observer saw it happen.
+        let queued = false;
+        const sweep = () => {
+          queued = false;
+          for (const target of targets) {
+            if (target.classList.contains('is-revealed')) continue;
+            if (target.getBoundingClientRect().top < window.innerHeight * 0.92) {
+              reveal(target);
+            }
+          }
+        };
+
+        const scheduleSweep = () => {
+          if (queued) return;
+          queued = true;
+          requestAnimationFrame(sweep);
+        };
+
+        if ('IntersectionObserver' in window) {
+          const observer = new IntersectionObserver(
+            (entries) => {
+              for (const entry of entries) {
+                if (!entry.isIntersecting) continue;
+                reveal(entry.target);
+                // One-shot: re-animating on every pass makes scrolling back up
+                // feel broken rather than lively.
+                observer.unobserve(entry.target);
+              }
+            },
+            { rootMargin: '0px 0px -8% 0px', threshold: 0.05 },
+          );
+
+          for (const target of targets) observer.observe(target);
+        }
+
+        window.addEventListener('scroll', scheduleSweep, { passive: true });
+        window.addEventListener('resize', scheduleSweep);
+        window.addEventListener('load', scheduleSweep);
+        sweep();
+      }
+    </script>
   </body>
 </html>

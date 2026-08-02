@@ -101,6 +101,22 @@ export interface WhyChooseUsContent {
   reasons: Reason[];
 }
 
+/** page_banner */
+export interface BreadcrumbStep {
+  label: string;
+  href?: string;
+}
+
+export interface PageBannerContent {
+  /** Blank falls back to the page title, filled in by the renderer. */
+  title: string;
+  subtitle?: string;
+  image?: Image;
+  /** Built by the renderer, which is the only place the page is known. */
+  breadcrumb?: BreadcrumbStep[];
+  showBreadcrumb?: boolean;
+}
+
 /** enquiry_form */
 export interface EnquiryFormContent {
   title: string;
@@ -243,6 +259,7 @@ export type BlockContent =
   | { type: 'gallery'; content: BeforeAfterGalleryContent }
   | { type: 'testimonials'; content: TestimonialsContent }
   | { type: 'contact'; content: ContactLocationContent }
-  | { type: 'enquiry_form'; content: EnquiryFormContent };
+  | { type: 'enquiry_form'; content: EnquiryFormContent }
+  | { type: 'page_banner'; content: PageBannerContent };
 
 export type BlockType = BlockContent['type'];
