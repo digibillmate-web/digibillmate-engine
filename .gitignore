@@ -36,3 +36,6 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Local one-off data scripts
+_*.mjs
