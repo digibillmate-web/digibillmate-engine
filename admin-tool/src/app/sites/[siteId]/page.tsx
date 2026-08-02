@@ -8,6 +8,7 @@ import DeployHookForm from '@/components/DeployHookForm';
 import ThemeForm from '@/components/ThemeForm';
 import RenameSiteForm from '@/components/RenameSiteForm';
 import BlockControls from '@/components/BlockControls';
+import BlockBackgroundPicker from '@/components/BlockBackgroundPicker';
 import AddBlockBar, { type CatalogEntry } from '@/components/AddBlockBar';
 import PagesManager, { type PageRow } from '@/components/PagesManager';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
@@ -32,6 +33,7 @@ interface InstanceRow {
   position: number;
   content: unknown;
   content_draft: unknown;
+  settings: { background?: string } | null;
   is_hidden: boolean;
   block_definitions: BlockDefinition | null;
 }
@@ -70,7 +72,7 @@ export default async function SiteEditorPage({
       supabase
         .from('block_instances')
         .select(
-          'id, page_id, position, content, content_draft, is_hidden, block_definitions(id, key, name, description, schema, client_editable_fields)',
+          'id, page_id, position, content, content_draft, settings, is_hidden, block_definitions(id, key, name, description, schema, client_editable_fields)',
         )
         .eq('site_id', siteId)
         .order('position', { ascending: true }),
@@ -245,6 +247,12 @@ export default async function SiteEditorPage({
                     {block.content_draft ? (
                       <span className="badge badge--draft">draft pending</span>
                     ) : null}
+
+                    <BlockBackgroundPicker
+                      siteId={siteId}
+                      blockId={block.id}
+                      current={block.settings?.background ?? 'default'}
+                    />
 
                     <BlockControls
                       siteId={siteId}

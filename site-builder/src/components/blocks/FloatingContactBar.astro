@@ -16,10 +16,17 @@ const { call, whatsapp, facebook, instagram, youtube } = Astro.props;
  */
 const channels = [
   { key: 'youtube', color: '#ff0000', channel: youtube },
-  { key: 'instagram', color: '#e1306c', channel: instagram },
+  // Instagram's mark is a gradient, not a flat magenta. A solid fill is the
+  // single most obvious tell that these are stand-in icons.
+  {
+    key: 'instagram',
+    color:
+      'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)',
+    channel: instagram,
+  },
   { key: 'facebook', color: '#1877f2', channel: facebook },
   { key: 'whatsapp', color: '#25d366', channel: whatsapp },
-  { key: 'call', color: '#16a34a', channel: call },
+  { key: 'call', color: '#4caf50', channel: call },
 ].filter((entry) => entry.channel?.url);
 ---
 
@@ -62,10 +69,13 @@ const channels = [
 }
 
 <style>
+  /* Vertically centred on the right edge and flush-stacked, matching the
+     reference rather than a floating cluster in the corner. */
   .floatbar {
     position: fixed;
-    right: 14px;
-    bottom: 18px;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 60;
   }
 
@@ -75,52 +85,49 @@ const channels = [
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 4px;
   }
 
+  /* Rounded squares, not circles. */
   .floatbar__link {
     display: grid;
     place-items: center;
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
     color: #fff;
     background: var(--floatbar-color);
-    box-shadow: 0 3px 10px rgb(0 0 0 / 0.28);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
     transition: transform 0.18s ease, box-shadow 0.18s ease;
   }
 
   .floatbar__link svg {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
   }
 
   .floatbar__link:hover,
   .floatbar__link:focus-visible {
-    transform: scale(1.09);
-    box-shadow: 0 5px 16px rgb(0 0 0 / 0.36);
+    transform: translateX(-3px);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.35);
   }
 
   /* Same shape on phones, just tighter — a full-width bottom bar would
      cover page content and read as app chrome. */
   @media (max-width: 767px) {
-    .floatbar {
-      right: 10px;
-      bottom: 14px;
-    }
-
     .floatbar__list {
-      gap: 8px;
+      gap: 3px;
     }
 
     .floatbar__link {
-      width: 40px;
-      height: 40px;
+      width: 34px;
+      height: 34px;
+      border-radius: 5px;
     }
 
     .floatbar__link svg {
-      width: 21px;
-      height: 21px;
+      width: 19px;
+      height: 19px;
     }
   }
 

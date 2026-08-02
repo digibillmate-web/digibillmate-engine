@@ -696,6 +696,33 @@ table.data tbody tr:hover {
   min-width: 220px;
 }
 
+.bgpicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.bgpicker__label {
+  font-size: 0.72rem;
+  color: var(--admin-text-muted);
+  font-weight: 600;
+}
+
+.bgpicker__select {
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 5px;
+  font: inherit;
+  font-size: 0.78rem;
+  background: var(--admin-surface);
+}
+
+/* The picker already claims the free space; the controls follow it. */
+.bgpicker + .blockctl {
+  margin-left: 0.4rem;
+}
+
 .blockctl {
   display: flex;
   align-items: center;

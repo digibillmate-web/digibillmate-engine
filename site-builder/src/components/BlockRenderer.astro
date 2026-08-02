@@ -16,6 +16,26 @@ interface Props {
 }
 
 const { blocks } = Astro.props;
+
+/**
+ * Background is chosen per block instance, but only from theme roles — never
+ * an arbitrary colour. A block picks the part it plays ("this is a tinted
+ * band"); the theme decides what that looks like. Storing a raw hex here would
+ * let a block drift away from the palette the moment the theme changed.
+ */
+const BACKGROUNDS = new Set(['surface', 'primary', 'secondary', 'default']);
+
+function backgroundClass(settings: unknown): string | undefined {
+  if (!settings || typeof settings !== 'object') return undefined;
+
+  const value = (settings as { background?: unknown }).background;
+  if (typeof value !== 'string') return undefined;
+
+  const name = value.trim().toLowerCase();
+  if (!BACKGROUNDS.has(name) || name === 'default') return undefined;
+
+  return `blockbg blockbg--${name}`;
+}
 ---
 
 {
@@ -33,6 +53,16 @@ const { blocks } = Astro.props;
 
     // Content shape is guaranteed by the BlockContent discriminated union.
     const Block = Component as any;
-    return <Block {...block.content} />;
+    const wrapper = backgroundClass((block as { settings?: unknown }).settings);
+
+    // Only wrapped when a background is actually chosen, so the default output
+    // stays exactly as it was rather than gaining an empty div everywhere.
+    return wrapper ? (
+      <div class={wrapper}>
+        <Block {...block.content} />
+      </div>
+    ) : (
+      <Block {...block.content} />
+    );
   })
 }

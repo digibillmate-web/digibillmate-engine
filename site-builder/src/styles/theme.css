@@ -68,6 +68,39 @@ img {
   display: block;
 }
 
+/*
+ * Per-block background bands.
+ *
+ * Set on a block instance via settings.background, chosen from theme roles
+ * rather than raw colours so a section cannot drift away from the palette.
+ * The inner section is made transparent so the band shows through — the
+ * components each set their own background otherwise.
+ */
+.blockbg > section {
+  background: transparent !important;
+}
+
+.blockbg--surface {
+  background: var(--dbm-color-surface);
+}
+
+.blockbg--primary {
+  background: var(--dbm-color-primary);
+  color: var(--dbm-color-primary-contrast);
+}
+
+.blockbg--secondary {
+  background: var(--dbm-color-secondary);
+  color: var(--dbm-color-secondary-contrast);
+}
+
+/* Headings and body copy inherit the band's contrast colour rather than the
+   page text colour, which would be unreadable on a dark band. */
+.blockbg--primary :is(h1, h2, h3, p, li, dt, dd, blockquote),
+.blockbg--secondary :is(h1, h2, h3, p, li, dt, dd, blockquote) {
+  color: inherit;
+}
+
 /* Shared primitives used by every block. */
 .dbm-section {
   padding-block: var(--dbm-section-y);
