@@ -101,6 +101,18 @@ export interface WhyChooseUsContent {
   reasons: Reason[];
 }
 
+/** enquiry_form */
+export interface EnquiryFormContent {
+  title: string;
+  intro?: string;
+  /** Digits only after normalising; empty falls back to email. */
+  whatsappNumber?: string;
+  email?: string;
+  submitLabel?: string;
+  serviceOptions?: string[];
+  footnote?: string;
+}
+
 /** hero */
 export interface HeroSlide {
   image: Image;
@@ -230,6 +242,7 @@ export type BlockContent =
   | { type: 'pricing_offers'; content: PricingOffersContent }
   | { type: 'gallery'; content: BeforeAfterGalleryContent }
   | { type: 'testimonials'; content: TestimonialsContent }
-  | { type: 'contact'; content: ContactLocationContent };
+  | { type: 'contact'; content: ContactLocationContent }
+  | { type: 'enquiry_form'; content: EnquiryFormContent };
 
 export type BlockType = BlockContent['type'];

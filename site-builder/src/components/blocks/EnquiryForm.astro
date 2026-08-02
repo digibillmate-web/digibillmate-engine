@@ -1,0 +1,216 @@
+---
+import type { EnquiryFormContent } from '../../types/blocks';
+
+type Props = EnquiryFormContent;
+
+const {
+  title,
+  intro,
+  whatsappNumber,
+  email,
+  submitLabel = 'Send enquiry',
+  serviceOptions,
+  footnote,
+} = Astro.props;
+
+/**
+ * The built site is static, so there is nothing to POST to. The form composes
+ * the enquiry and hands it to the visitor's own WhatsApp or mail client, which
+ * is how this category of business actually takes enquiries — and it cannot be
+ * abused as an open relay, because nothing is sent server-side.
+ */
+const digits = whatsappNumber ? whatsappNumber.replace(/[^\d]/g, '') : '';
+const hasWhatsapp = digits.length > 0;
+const hasEmail = Boolean(email);
+
+// Without either destination the form could collect input and silently drop
+// it, which is worse than not rendering at all.
+const canSend = hasWhatsapp || hasEmail;
+---
+
+<section class="enquiry dbm-section" id="enquiry">
+  <div class="dbm-container">
+    <h2 class="dbm-heading">{title}</h2>
+    {intro && <p class="dbm-intro">{intro}</p>}
+
+    {canSend ? (
+      <form
+        class="enquiry__form"
+        data-enquiry
+        data-whatsapp={hasWhatsapp ? digits : undefined}
+        data-email={hasEmail ? email : undefined}
+        data-subject={title}
+      >
+        <div class="enquiry__grid">
+          <div class="enquiry__field">
+            <label for="enq-name">Your name<span class="req">*</span></label>
+            <input id="enq-name" name="name" type="text" required autocomplete="name" />
+          </div>
+
+          <div class="enquiry__field">
+            <label for="enq-mobile">Mobile number<span class="req">*</span></label>
+            <input
+              id="enq-mobile"
+              name="mobile"
+              type="tel"
+              required
+              autocomplete="tel"
+              inputmode="tel"
+            />
+          </div>
+
+          <div class="enquiry__field">
+            <label for="enq-email">Email</label>
+            <input id="enq-email" name="email" type="email" autocomplete="email" />
+          </div>
+
+          {serviceOptions && serviceOptions.length > 0 && (
+            <div class="enquiry__field">
+              <label for="enq-service">Service needed</label>
+              <select id="enq-service" name="service">
+                <option value="">Not sure yet</option>
+                {serviceOptions.map((option) => (
+                  <option value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        <div class="enquiry__field">
+          <label for="enq-message">Tell us about the work</label>
+          <textarea id="enq-message" name="message" rows="4"></textarea>
+        </div>
+
+        <div class="enquiry__actions">
+          <button class="dbm-btn dbm-btn--primary" type="submit">{submitLabel}</button>
+          <span class="enquiry__route">
+            {hasWhatsapp ? 'Opens WhatsApp with your details filled in' : 'Opens your email app'}
+          </span>
+        </div>
+
+        {footnote && <p class="enquiry__footnote">{footnote}</p>}
+      </form>
+    ) : (
+      <p class="enquiry__unconfigured">
+        This form has no WhatsApp number or email address set, so it has nowhere to send
+        enquiries.
+      </p>
+    )}
+  </div>
+</section>
+
+<style>
+  .enquiry__form {
+    max-width: 720px;
+  }
+
+  .enquiry__grid {
+    display: grid;
+    gap: var(--dbm-space-md);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-bottom: var(--dbm-space-md);
+  }
+
+  .enquiry__field {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .enquiry__field label {
+    font-size: var(--dbm-text-sm);
+    font-weight: 600;
+  }
+
+  .enquiry__field .req {
+    color: var(--dbm-color-primary);
+    margin-left: 0.15rem;
+  }
+
+  .enquiry__field input,
+  .enquiry__field select,
+  .enquiry__field textarea {
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid var(--dbm-color-border);
+    border-radius: var(--dbm-radius-sm);
+    font: inherit;
+    color: inherit;
+    background: var(--dbm-color-background);
+  }
+
+  .enquiry__field textarea {
+    resize: vertical;
+  }
+
+  .enquiry__field input:focus-visible,
+  .enquiry__field select:focus-visible,
+  .enquiry__field textarea:focus-visible {
+    outline: 2px solid var(--dbm-color-primary);
+    outline-offset: 1px;
+  }
+
+  .enquiry__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--dbm-space-md);
+    flex-wrap: wrap;
+    margin-top: var(--dbm-space-md);
+  }
+
+  .enquiry__route,
+  .enquiry__footnote {
+    font-size: var(--dbm-text-sm);
+    color: var(--dbm-color-text-muted);
+  }
+
+  .enquiry__footnote {
+    margin: var(--dbm-space-sm) 0 0;
+  }
+
+  .enquiry__unconfigured {
+    color: var(--dbm-color-text-muted);
+    font-style: italic;
+  }
+</style>
+
+<script>
+  /**
+   * Composes the enquiry and hands it off.
+   *
+   * Progressive enhancement is deliberate here: with JS disabled the form
+   * simply does not submit rather than silently losing what someone typed,
+   * and the phone number in the header remains the way to make contact.
+   */
+  document.querySelectorAll<HTMLFormElement>('form[data-enquiry]').forEach((form) => {
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      if (!form.reportValidity()) return;
+
+      const data = new FormData(form);
+      const value = (name: string) => String(data.get(name) ?? '').trim();
+
+      const lines = [
+        `Name: ${value('name')}`,
+        `Mobile: ${value('mobile')}`,
+        value('email') ? `Email: ${value('email')}` : '',
+        value('service') ? `Service: ${value('service')}` : '',
+        value('message') ? `Details: ${value('message')}` : '',
+      ].filter(Boolean);
+
+      const body = lines.join('\n');
+      const whatsapp = form.dataset.whatsapp;
+      const email = form.dataset.email;
+      const subject = form.dataset.subject || 'Enquiry';
+
+      const target = whatsapp
+        ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(body)}`
+        : `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+      // A new tab for WhatsApp so the site is not navigated away from; mailto
+      // hands off to the OS and leaves the page where it is either way.
+      window.open(target, whatsapp ? '_blank' : '_self', 'noopener');
+    });
+  });
+</script>

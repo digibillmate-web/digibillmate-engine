@@ -215,6 +215,19 @@ const CONTENT_MAPPERS = {
     })),
   }),
 
+  enquiry_form: (c) => ({
+    title: c.title,
+    intro: c.intro,
+    whatsappNumber: c.whatsapp_number,
+    email: c.email,
+    submitLabel: c.submit_label,
+    // Blank rows are dropped rather than rendered as an empty option.
+    serviceOptions: (c.service_options ?? [])
+      .map((option) => String(option).trim())
+      .filter(Boolean),
+    footnote: c.footnote,
+  }),
+
   contact: (c) => ({
     heading: c.title,
     address: c.address,
