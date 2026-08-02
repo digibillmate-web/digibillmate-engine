@@ -162,7 +162,8 @@ const brandHref = navLinks?.find((link) => link.href === '/') ? '/' : '#top';
     white-space: nowrap;
   }
 
-  /* The toggle only exists on small screens. */
+  /* The toggle only exists on small screens. Solid dark square with white
+     bars, matching how these sites present the menu button. */
   .header__toggle {
     display: none;
     order: 3;
@@ -170,9 +171,9 @@ const brandHref = navLinks?.find((link) => link.href === '/') ? '/' : '#top';
     width: 42px;
     height: 42px;
     padding: 0;
-    border: 1px solid var(--dbm-color-border);
+    border: 0;
     border-radius: var(--dbm-radius-sm);
-    background: var(--dbm-color-background);
+    background: var(--dbm-color-secondary);
     cursor: pointer;
   }
 
@@ -184,9 +185,10 @@ const brandHref = navLinks?.find((link) => link.href === '/') ? '/' : '#top';
 
   .header__bars span {
     display: block;
-    width: 20px;
-    height: 2px;
-    background: var(--dbm-color-text);
+    width: 22px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--dbm-color-secondary-contrast);
     transition: transform 0.2s ease, opacity 0.2s ease;
   }
 
@@ -239,9 +241,13 @@ const brandHref = navLinks?.find((link) => link.href === '/') ? '/' : '#top';
       display: flex;
     }
 
+    /* Dark dropdown panel, so the open menu reads as a distinct surface over
+       the page rather than as more header. */
     .header__inner.is-open .header__nav {
-      border-top: 1px solid var(--dbm-color-border);
-      padding-block: var(--dbm-space-sm);
+      background: var(--dbm-color-secondary);
+      border-radius: var(--dbm-radius-sm);
+      padding: var(--dbm-space-xs) var(--dbm-space-md);
+      margin-bottom: var(--dbm-space-sm);
     }
 
     .header__links {
@@ -251,7 +257,7 @@ const brandHref = navLinks?.find((link) => link.href === '/') ? '/' : '#top';
     }
 
     .header__links li {
-      border-bottom: 1px solid var(--dbm-color-border);
+      border-bottom: 1px solid rgb(255 255 255 / 0.14);
     }
 
     .header__links li:last-child {
@@ -260,13 +266,17 @@ const brandHref = navLinks?.find((link) => link.href === '/') ? '/' : '#top';
 
     .header__link {
       display: block;
-      padding: 0.7rem 0.2rem;
+      padding: 0.75rem 0.2rem;
       border-bottom: 0;
       font-size: var(--dbm-text-base);
+      color: var(--dbm-color-secondary-contrast);
     }
 
+    .header__link:hover,
+    .header__link:focus-visible,
     .header__link[aria-current='page'] {
       border-bottom: 0;
+      color: var(--dbm-color-primary);
     }
   }
 
