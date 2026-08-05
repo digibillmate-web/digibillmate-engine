@@ -100,11 +100,18 @@ const telHref = contact?.phone ? `tel:${contact.phone.replace(/[^+\d]/g, '')}` :
 </footer>
 
 <style>
+  /*
+   * No bottom padding. It used to reserve 56px for a full-width contact bar
+   * along the bottom of the screen; that bar became a right-edge rail at
+   * every width, and the reservation stayed — dead space under the copyright
+   * on every page.
+   *
+   * The footer now takes its height from its contents, so adding a column or
+   * dropping a link changes it by exactly that much.
+   */
   .footer {
     background: var(--dbm-color-secondary);
     color: var(--dbm-color-secondary-contrast);
-    /* Clears the mobile floating contact bar. */
-    padding-bottom: 56px;
   }
 
   /*
@@ -121,8 +128,11 @@ const telHref = contact?.phone ? `tel:${contact.phone.replace(/[^+\d]/g, '')}` :
   .footer__inner {
     display: grid;
     gap: var(--dbm-space-lg);
-    padding-block: clamp(2rem, 4vw, 3rem);
+    padding-block: clamp(1.75rem, 3vw, 2.5rem);
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    /* Columns sit at their natural height rather than each stretching to
+       match the tallest, which left the short ones padded with nothing. */
+    align-items: start;
   }
 
   .footer__col--brand {
@@ -150,8 +160,9 @@ const telHref = contact?.phone ? `tel:${contact.phone.replace(/[^+\d]/g, '')}` :
     background: var(--dbm-color-background);
     border-radius: var(--dbm-radius-sm);
     padding: 6px;
-    /* Capped: at full width the QR alone set the height of the whole row. */
-    max-width: 132px;
+    /* Capped: at full width the QR alone set the height of the whole row,
+       and it only has to be scannable, not looked at. */
+    max-width: 108px;
   }
 
   .footer__qr figcaption {
