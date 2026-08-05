@@ -182,7 +182,57 @@ const canSend = hasWhatsapp || hasEmail;
    * simply does not submit rather than silently losing what someone typed,
    * and the phone number in the header remains the way to make contact.
    */
+  /**
+   * Preselects the service someone arrived asking about.
+   *
+   * The services page links here as ?service=Dent+Removal, and retyping what
+   * you just clicked is the kind of small friction that loses an enquiry.
+   *
+   * The value comes from the URL, so it is attacker-controllable and is only
+   * ever assigned through value/textContent — never parsed as markup. It is
+   * also length-capped, because a megabyte of query string in a WhatsApp
+   * message is nobody's idea of an enquiry.
+   */
+  function prefillService(form: HTMLFormElement) {
+    const requested = new URLSearchParams(location.search).get('service')?.trim();
+    if (!requested) return;
+
+    const service = requested.slice(0, 80);
+    const select = form.querySelector<HTMLSelectElement>('select[name="service"]');
+
+    if (select) {
+      const match = Array.from(select.options).find(
+        (option) => option.value.toLowerCase() === service.toLowerCase(),
+      );
+
+      if (match) {
+        select.value = match.value;
+      } else {
+        // A service the list does not carry still names itself on the
+        // enquiry, rather than arriving as "Not sure yet".
+        const option = document.createElement('option');
+        option.value = service;
+        option.textContent = service;
+        select.append(option);
+        select.value = service;
+      }
+      return;
+    }
+
+    // No service picker on this form: say it in the message instead, ahead of
+    // anything already typed rather than replacing it.
+    const message = form.querySelector<HTMLTextAreaElement>('textarea[name="message"]');
+    if (!message) return;
+
+    const prefix = `Enquiry about: ${service}`;
+    if (!message.value.includes(prefix)) {
+      message.value = message.value ? `${prefix}\n\n${message.value}` : `${prefix}\n\n`;
+    }
+  }
+
   document.querySelectorAll<HTMLFormElement>('form[data-enquiry]').forEach((form) => {
+    prefillService(form);
+
     form.addEventListener('submit', (event) => {
       event.preventDefault();
 
