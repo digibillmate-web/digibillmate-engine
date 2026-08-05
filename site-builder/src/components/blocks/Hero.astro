@@ -301,7 +301,8 @@ const isCarousel = carouselSlides.length > 1;
    * slide is already visible and the arrows simply do nothing, rather than the
    * banner disappearing entirely.
    */
-  const AUTOPLAY_MS = 5000;
+  /* 3s between slides, matching the reference's swiper delay. */
+  const AUTOPLAY_MS = 3000;
 
   document.querySelectorAll<HTMLElement>('[data-carousel="true"]').forEach((carousel) => {
     const slides = Array.from(carousel.querySelectorAll<HTMLElement>('.hero__slide'));

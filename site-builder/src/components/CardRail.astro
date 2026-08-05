@@ -141,7 +141,8 @@ const { label, autoplay = false, class: className = '' } = Astro.props;
    * three cards with only three cards in it has nowhere to scroll, and dead
    * controls invite clicks that do nothing.
    */
-  const AUTOPLAY_MS = 4500;
+  /* 3s between advances, matching the reference's swiper delay. */
+  const AUTOPLAY_MS = 3000;
 
   document.querySelectorAll<HTMLElement>('[data-rail]').forEach((rail) => {
     const track = rail.querySelector<HTMLElement>('[data-rail-track]');

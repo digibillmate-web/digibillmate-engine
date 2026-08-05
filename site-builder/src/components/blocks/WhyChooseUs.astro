@@ -87,14 +87,25 @@ const columns = image ? [reasons.slice(0, half), reasons.slice(half)] : [reasons
     align-content: start;
   }
 
-  .why__item {
+  /*
+   * With no centre image the reasons run across the page instead of down a
+   * column — the shape the reference uses for its Vision/Mission pair. The
+   * dividers below are for the stacked case only; side by side they would
+   * read as stray underlines.
+   */
+  .why__layout:not(.why__layout--split) .why__list {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--dbm-space-xl);
+  }
+
+  .why__layout--split .why__item {
     /* A hairline between stacked reasons instead of a card border: the
        reference separates them rather than boxing them. */
     padding-bottom: var(--dbm-space-lg);
     border-bottom: 1px solid var(--dbm-color-border);
   }
 
-  .why__item:last-child {
+  .why__layout--split .why__item:last-child {
     padding-bottom: 0;
     border-bottom: 0;
   }
