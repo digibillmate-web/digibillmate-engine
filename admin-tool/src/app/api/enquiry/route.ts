@@ -37,29 +37,40 @@ function corsHeaders(origin: string | null) {
 /**
  * Origins allowed to post for a given site.
  *
- * Derived from the site's own subdomain rather than a wildcard: this endpoint
- * writes to the database without a session, so it should accept posts from the
- * sites it knows about and no others.
+ * Deliberately not derived from sites.subdomain. That column is the site's
+ * name in this system, not its Pages project: this site's subdomain is
+ * "digibillmate" while it is served from dbmcars.pages.dev. Deriving the
+ * origin from it would 403 every genuine submission, and the failure would
+ * look like a broken form rather than a mismatched setting.
+ *
+ * So: any Pages deploy, plus the site's own custom domain, plus local dev.
+ *
+ * That is wider than it first appears it should be, and it is worth being
+ * clear why it is acceptable. CORS is not the security boundary here — the
+ * browser enforces it, and anything posting directly ignores it entirely.
+ * What actually protects this endpoint is that it writes only for a known
+ * site id, drops honeypot hits, and rate-limits per address. The origin check
+ * is hygiene on top of that, not the thing holding the door.
  */
-function allowedOrigins(subdomain: string | null): string[] {
-  const origins = [
-    'http://localhost:4321',
-    'http://127.0.0.1:4321',
-  ];
+function originAllowed(origin: string | null, customDomain: string | null): boolean {
+  if (!origin) return false;
 
-  if (subdomain) {
-    origins.push(`https://${subdomain}.pages.dev`);
-    // Cloudflare serves preview deploys from <hash>.<project>.pages.dev; those
-    // are matched by suffix below rather than listed here.
+  let host: string;
+  try {
+    host = new URL(origin).hostname;
+  } catch {
+    return false;
   }
 
-  return origins;
-}
+  if (host === 'localhost' || host === '127.0.0.1') return true;
+  if (host === 'pages.dev' || host.endsWith('.pages.dev')) return true;
 
-function originAllowed(origin: string | null, subdomain: string | null): boolean {
-  if (!origin) return false;
-  if (allowedOrigins(subdomain).includes(origin)) return true;
-  return subdomain ? origin.endsWith(`.${subdomain}.pages.dev`) : false;
+  if (customDomain) {
+    const bare = customDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    if (host === bare || host === `www.${bare}`) return true;
+  }
+
+  return false;
 }
 
 function clean(value: unknown, max: number): string {
@@ -99,7 +110,7 @@ export async function POST(request: Request) {
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, name, subdomain, enquiry_email')
+    .select('id, name, subdomain, custom_domain, enquiry_email')
     .eq('id', siteId)
     .single();
 
@@ -107,7 +118,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'Unknown site.' }, { status: 404 });
   }
 
-  if (!originAllowed(origin, site.subdomain)) {
+  if (!originAllowed(origin, site.custom_domain)) {
     return NextResponse.json(
       { ok: false, error: 'This origin may not submit enquiries for that site.' },
       { status: 403 },
