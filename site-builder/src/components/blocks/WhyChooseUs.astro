@@ -95,7 +95,61 @@ const columns = image ? [reasons.slice(0, half), reasons.slice(half)] : [reasons
    */
   .why__layout:not(.why__layout--split) .why__list {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: var(--dbm-space-xl);
+    gap: var(--dbm-space-lg);
+  }
+
+  .why__layout:not(.why__layout--split) .why__item {
+    position: relative;
+    z-index: 1;
+    /* Clips the panel below, so it is invisible until it rises. */
+    overflow: hidden;
+    text-align: center;
+    padding: var(--dbm-space-lg);
+    border: 1px solid var(--dbm-color-border);
+    border-radius: var(--dbm-radius-lg);
+    background: var(--dbm-color-background);
+  }
+
+  /*
+   * Hover fill, copied in behaviour from the reference: a dome-topped panel
+   * waiting just below the card rises to cover it and flattens as it lands.
+   * The curved leading edge is what makes it read as a sweep rather than a
+   * plain colour swap.
+   */
+  .why__layout:not(.why__layout--split) .why__item::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    height: 100%;
+    z-index: 0;
+    background: var(--dbm-color-primary);
+    border-radius: 500px 500px 0 0;
+    opacity: 0;
+    transition: top 0.4s ease-in-out, border-radius 0.4s ease-in-out, opacity 0.4s ease-in-out;
+  }
+
+  .why__layout:not(.why__layout--split) .why__item:hover::before,
+  .why__layout:not(.why__layout--split) .why__item:focus-within::before {
+    top: 0;
+    border-radius: 0;
+    opacity: 1;
+  }
+
+  /* Content sits above the rising panel. Without this the panel is a
+     positioned descendant and paints over the text it is meant to sit behind. */
+  .why__layout:not(.why__layout--split) .why__item > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .why__layout:not(.why__layout--split) .why__item :is(.why__icon, .why__title, .why__desc) {
+    transition: color 0.4s ease-in-out;
+  }
+
+  .why__layout:not(.why__layout--split) .why__item:is(:hover, :focus-within)
+    :is(.why__icon, .why__title, .why__desc) {
+    color: var(--dbm-color-primary-contrast);
   }
 
   .why__layout--split .why__item {
@@ -151,6 +205,18 @@ const columns = image ? [reasons.slice(0, half), reasons.slice(half)] : [reasons
     /* Right-hand reasons align toward the image, mirroring the left column. */
     .why__layout--split .why__list:last-child .why__desc {
       margin-left: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* Still shows which item is under the cursor, without the sweep. */
+    .why__layout:not(.why__layout--split) .why__item::before,
+    .why__layout:not(.why__layout--split) .why__item :is(.why__icon, .why__title, .why__desc) {
+      transition: none;
+    }
+
+    .why__layout:not(.why__layout--split) .why__item::before {
+      border-radius: 0;
     }
   }
 
