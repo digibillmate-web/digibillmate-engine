@@ -7,12 +7,22 @@
  */
 import type { BlockContent } from './blocks';
 
+/** Reveal styles the site builder has CSS for. */
+export type RevealAnimation = 'fade-up' | 'fade' | 'slide-left' | 'slide-right' | 'zoom' | 'none';
+
 export interface ExportedPage {
   /** '' is the home page, which builds to /index.html. */
   slug: string;
   title: string;
   navLabel: string;
   showInNav: boolean;
+  /**
+   * Accent overrides for this page only, as --dbm-* custom properties. Absent
+   * means the page follows the site theme, which is the usual case.
+   */
+  theme?: Record<string, string>;
+  /** Absent means the site default. */
+  revealAnimation?: RevealAnimation;
   /** Ordered by `position`. */
   blocks: BlockContent[];
 }

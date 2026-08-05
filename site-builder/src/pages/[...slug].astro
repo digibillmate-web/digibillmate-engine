@@ -166,6 +166,12 @@ const description = site.theme['--dbm-seo-description']?.trim() || undefined;
 const blocks = composePage(page, home);
 ---
 
-<SiteLayout title={title} description={description} theme={site.theme}>
+<SiteLayout
+  title={title}
+  description={description}
+  theme={site.theme}
+  pageTheme={page.theme}
+  revealAnimation={page.revealAnimation}
+>
   <BlockRenderer blocks={blocks} />
 </SiteLayout>

@@ -10,6 +10,7 @@ import RenameSiteForm from '@/components/RenameSiteForm';
 import BlockControls from '@/components/BlockControls';
 import BlockAppearance from '@/components/BlockAppearance';
 import CollapsibleBlock from '@/components/CollapsibleBlock';
+import PageAppearance from '@/components/PageAppearance';
 import AddBlockBar, { type CatalogEntry } from '@/components/AddBlockBar';
 import PagesManager, { type PageRow } from '@/components/PagesManager';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
@@ -108,7 +109,7 @@ export default async function SiteEditorPage({
       supabase.from('block_definitions').select('id, key, name').order('name'),
       supabase
         .from('site_pages')
-        .select('id, slug, title, show_in_nav, position')
+        .select('id, slug, title, show_in_nav, position, theme_overrides, reveal_animation')
         .eq('site_id', siteId)
         .order('position', { ascending: true }),
     ]);
@@ -122,6 +123,16 @@ export default async function SiteEditorPage({
     show_in_nav: row.show_in_nav !== false,
     blockCount: allBlocks.filter((b) => b.page_id === row.id).length,
   }));
+
+  const appearanceByPage = new Map(
+    (pageRows ?? []).map((row) => [
+      row.id as string,
+      {
+        overrides: (row.theme_overrides ?? {}) as Record<string, string>,
+        reveal: (row.reveal_animation as string | null) ?? '',
+      },
+    ]),
+  );
 
   // Editing is always scoped to one page: ?page=<id>, defaulting to home.
   const activePage = pages.find((p) => p.id === pageParam) ?? pages[0];
@@ -235,10 +246,23 @@ export default async function SiteEditorPage({
             <PagesManager siteId={siteId} pages={pages} activePageId={activePageId} />
 
             {activePage && (
-              <p className="pages__editing">
-                Editing blocks on <strong>{activePage.title}</strong>{' '}
-                <code>/{activePage.slug}</code>
-              </p>
+              <>
+                <p className="pages__editing">
+                  Editing blocks on <strong>{activePage.title}</strong>{' '}
+                  <code>/{activePage.slug}</code>
+                </p>
+
+                <div className="card">
+                  <PageAppearance
+                    siteId={siteId}
+                    pageId={activePage.id}
+                    pageTitle={activePage.title}
+                    siteTheme={siteTheme}
+                    initialOverrides={appearanceByPage.get(activePage.id)?.overrides ?? {}}
+                    initialReveal={appearanceByPage.get(activePage.id)?.reveal ?? ''}
+                  />
+                </div>
+              </>
             )}
 
             <div className="card addblock-card">

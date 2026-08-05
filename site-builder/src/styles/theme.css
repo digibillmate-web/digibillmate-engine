@@ -146,6 +146,47 @@ img {
 }
 
 /*
+ * Per-page reveal styles.
+ *
+ * A fixed menu, set on <body> by the renderer, so a page can read differently
+ * from the rest of the site without any page inventing its own motion. Each
+ * value here has a matching entry in the database constraint; adding one means
+ * adding it in both places, or the option saves and then does nothing.
+ *
+ * Only the hidden state varies — the transition above is shared, so every
+ * page settles at the same speed and the site still feels like one site.
+ */
+.has-reveal [data-reveal-anim='fade'] [data-reveal]:not(.is-revealed) {
+  transform: none;
+}
+
+.has-reveal [data-reveal-anim='slide-left'] [data-reveal]:not(.is-revealed) {
+  transform: translateX(-40px);
+}
+
+.has-reveal [data-reveal-anim='slide-right'] [data-reveal]:not(.is-revealed) {
+  transform: translateX(40px);
+}
+
+.has-reveal [data-reveal-anim='zoom'] [data-reveal]:not(.is-revealed) {
+  transform: scale(0.94);
+}
+
+/* Content still appears; it simply arrives without motion. */
+.has-reveal [data-reveal-anim='none'] [data-reveal]:not(.is-revealed) {
+  opacity: 1;
+  transform: none;
+}
+
+/* Matches the staggered-children rule structure below, which is one selector
+   longer — a shorter rule here loses and the cards animate on a page that
+   asked for no animation. */
+.has-reveal [data-reveal-anim='none'] [data-reveal]:not(.is-revealed) [data-stagger] > * {
+  opacity: 1;
+  transform: none;
+}
+
+/*
  * Per-character heading reveal.
  *
  * The reference splits each section heading into characters and slides them

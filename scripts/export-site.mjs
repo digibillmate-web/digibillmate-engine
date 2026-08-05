@@ -311,11 +311,25 @@ async function main() {
 
   const { data: pageRows, error: pageError } = await supabase
     .from('site_pages')
-    .select('id, slug, title, nav_label, position, show_in_nav')
+    .select(
+      'id, slug, title, nav_label, position, show_in_nav, theme_overrides, reveal_animation',
+    )
     .eq('site_id', site.id)
     .order('position', { ascending: true });
 
-  if (pageError) fail(`Could not load site pages: ${pageError.message}`);
+  if (pageError) {
+    // Naming the migration here because the raw PostgREST message ("column
+    // site_pages.theme_overrides does not exist") tells you what is wrong but
+    // not what to do about it.
+    const missingColumn = /column .* does not exist/i.test(pageError.message);
+    fail(
+      `Could not load site pages: ${pageError.message}` +
+        (missingColumn
+          ? '\n  A migration has not been applied — see supabase/migrations/ ' +
+            'and run any files newer than your database.'
+          : ''),
+    );
+  }
 
   if (!pageRows || pageRows.length === 0) {
     fail(
@@ -360,15 +374,27 @@ async function main() {
     fail(`${unresolved.length} block(s) have no block_definitions.key — check the join`);
   }
 
-  const pages = pageRows.map((page) => ({
-    slug: page.slug ?? '',
-    title: page.title,
-    navLabel: page.nav_label || page.title,
-    showInNav: page.show_in_nav !== false,
-    blocks: (instanceRows ?? [])
-      .filter((row) => row.page_id === page.id)
-      .map(toBlock),
-  }));
+  const pages = pageRows.map((page) => {
+    /*
+     * Page overrides are emitted separately from the site theme rather than
+     * merged into it. The renderer scopes them to the page, so the site theme
+     * stays the single value every page starts from and a page's own colours
+     * are visibly a delta rather than a full copy of the palette.
+     */
+    const overrides = toCssVars(page.theme_overrides);
+
+    return {
+      slug: page.slug ?? '',
+      title: page.title,
+      navLabel: page.nav_label || page.title,
+      showInNav: page.show_in_nav !== false,
+      ...(Object.keys(overrides).length > 0 ? { theme: overrides } : {}),
+      ...(page.reveal_animation ? { revealAnimation: page.reveal_animation } : {}),
+      blocks: (instanceRows ?? [])
+        .filter((row) => row.page_id === page.id)
+        .map(toBlock),
+    };
+  });
 
   // --- Navigation -----------------------------------------------------------
 

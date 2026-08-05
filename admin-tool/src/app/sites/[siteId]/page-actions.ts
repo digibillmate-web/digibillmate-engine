@@ -10,6 +10,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { validateSlug, normaliseSlug } from '@/lib/page-slug';
+import { PAGE_OVERRIDE_TOKENS, REVEAL_VALUES } from '@/lib/page-appearance';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface PageResult {
@@ -116,6 +117,57 @@ export async function updatePage(
     }
     return { ok: false, error: error.message };
   }
+
+  if (!data || data.length === 0) {
+    return { ok: false, error: 'No page updated — your account may lack admin rights.' };
+  }
+
+  revalidatePath(`/sites/${siteId}`);
+  return { ok: true, pageId };
+}
+
+/**
+ * A page's own accent colours and reveal style.
+ *
+ * Separate from updatePage so renaming a page stays a two-field operation.
+ * Blank overrides are stripped rather than stored as empty strings: an empty
+ * custom property is still a declaration, and it would blank the colour on
+ * the page rather than falling back to the site theme.
+ */
+export async function updatePageAppearance(
+  siteId: string,
+  pageId: string,
+  input: { overrides: Record<string, string>; revealAnimation: string },
+): Promise<PageResult> {
+  const supabase = await createClient();
+  if (!(await requireUser(supabase))) return { ok: false, error: 'Not signed in.' };
+
+  const overrides = Object.fromEntries(
+    Object.entries(input.overrides ?? {})
+      .map(([key, value]) => [key, String(value ?? '').trim()])
+      .filter(([, value]) => value !== ''),
+  );
+
+  const unknownToken = Object.keys(overrides).find(
+    (key) => !PAGE_OVERRIDE_TOKENS.some((token) => token.key === key),
+  );
+  if (unknownToken) {
+    return { ok: false, error: `${unknownToken} is not a page-level colour.` };
+  }
+
+  const reveal = input.revealAnimation?.trim() || null;
+  if (reveal && !REVEAL_VALUES.includes(reveal)) {
+    return { ok: false, error: `${reveal} is not one of the available animations.` };
+  }
+
+  const { data, error } = await supabase
+    .from('site_pages')
+    .update({ theme_overrides: overrides, reveal_animation: reveal })
+    .eq('id', pageId)
+    .eq('site_id', siteId)
+    .select('id');
+
+  if (error) return { ok: false, error: error.message };
 
   if (!data || data.length === 0) {
     return { ok: false, error: 'No page updated — your account may lack admin rights.' };

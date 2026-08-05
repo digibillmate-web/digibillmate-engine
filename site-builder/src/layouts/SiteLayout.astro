@@ -7,9 +7,13 @@ interface Props {
   description?: string;
   /** Theme preset from the site's archetype: CSS custom property overrides. */
   theme?: Record<string, string>;
+  /** This page's own accent overrides, layered over the site theme. */
+  pageTheme?: Record<string, string>;
+  /** This page's scroll-reveal style. */
+  revealAnimation?: string;
 }
 
-const { title, description, theme } = Astro.props;
+const { title, description, theme, pageTheme, revealAnimation } = Astro.props;
 
 // Every theme key is exported as a --dbm-* custom property, including
 // favicon-url, which isn't a CSS value — it belongs in a <link> tag instead.
@@ -21,12 +25,23 @@ const faviconUrl = theme?.[FAVICON_VAR];
 // rather than in the custom property block.
 const NON_CSS_VARS = new Set([FAVICON_VAR, '--dbm-seo-title', '--dbm-seo-description']);
 
-const themeStyle = theme
-  ? Object.entries(theme)
-      .filter(([key]) => !NON_CSS_VARS.has(key))
-      .map(([key, value]) => `${key}: ${value};`)
-      .join(' ')
-  : undefined;
+const toDeclarations = (values?: Record<string, string>) =>
+  values
+    ? Object.entries(values)
+        .filter(([key]) => !NON_CSS_VARS.has(key))
+        .map(([key, value]) => `${key}: ${value};`)
+        .join(' ')
+    : '';
+
+const themeStyle = toDeclarations(theme);
+
+/*
+ * Page overrides are written as a second, more specific rule rather than
+ * merged into the site theme above. Keeping them separate means the built
+ * HTML shows what the site sets and what this page changes, instead of one
+ * flattened palette that gives no clue which values are page-specific.
+ */
+const pageStyle = toDeclarations(pageTheme);
 
 ---
 
@@ -42,8 +57,10 @@ const themeStyle = theme
       after this tag, so a plain `:root` here would lose to the defaults.
     */}
     {themeStyle && <style is:inline set:html={`:root:root { ${themeStyle} }`}></style>}
+    {/* One step more specific than the site theme, so the page wins. */}
+    {pageStyle && <style is:inline set:html={`:root:root:root { ${pageStyle} }`}></style>}
   </head>
-  <body>
+  <body data-reveal-anim={revealAnimation}>
     <main>
       <slot />
     </main>
