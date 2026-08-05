@@ -9,12 +9,39 @@ import ThemeForm from '@/components/ThemeForm';
 import RenameSiteForm from '@/components/RenameSiteForm';
 import BlockControls from '@/components/BlockControls';
 import BlockAppearance from '@/components/BlockAppearance';
+import CollapsibleBlock from '@/components/CollapsibleBlock';
 import AddBlockBar, { type CatalogEntry } from '@/components/AddBlockBar';
 import PagesManager, { type PageRow } from '@/components/PagesManager';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
 import { effectiveTheme } from '@/lib/theme';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * One line of a block's own words, so a collapsed row says what it holds
+ * rather than only what type it is — "Header nav" is far less useful than
+ * "Header nav · Chennai's Trusted Multi-Brand Body Shop".
+ *
+ * Deliberately guesses from a few common keys instead of consulting the
+ * schema: this is a label, and a block with none of them simply shows its
+ * type, which is what the row did before.
+ */
+const SUMMARY_KEYS = ['heading', 'title', 'headline', 'business_name', 'name'];
+
+function blockSummary(content: unknown): string | undefined {
+  if (!content || typeof content !== 'object') return undefined;
+  const record = content as Record<string, unknown>;
+
+  for (const key of SUMMARY_KEYS) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) {
+      const text = value.trim();
+      return text.length > 60 ? `${text.slice(0, 57)}…` : text;
+    }
+  }
+
+  return undefined;
+}
 
 type Tab = 'content' | 'theme' | 'settings';
 
@@ -244,29 +271,30 @@ export default async function SiteEditorPage({
                   className={`card block ${block.is_hidden ? 'block--hidden' : ''}`}
                   key={block.id}
                 >
-                  <header className="block__head">
-                    <span className="block__pos">{block.position}</span>
-                    <div>
-                      <h2 className="block__name">{definition?.name ?? 'Unknown block'}</h2>
-                      <code className="block__key">{definition?.key ?? '—'}</code>
-                    </div>
-
-                    {block.is_hidden && <span className="badge badge--archived">hidden</span>}
-                    {block.content_draft ? (
-                      <span className="badge badge--draft">draft pending</span>
-                    ) : null}
-
-                    <BlockControls
-                      siteId={siteId}
-                      pageId={activePageId}
-                      blockId={block.id}
-                      blockName={definition?.name ?? 'this block'}
-                      isHidden={block.is_hidden}
-                      orderedIds={orderedIds}
-                    />
-                  </header>
-
-                  <div className="block__body">
+                  <CollapsibleBlock
+                    position={block.position}
+                    name={definition?.name ?? 'Unknown block'}
+                    blockKey={definition?.key ?? '—'}
+                    summary={blockSummary(block.content)}
+                    badges={
+                      <>
+                        {block.is_hidden && <span className="badge badge--archived">hidden</span>}
+                        {block.content_draft ? (
+                          <span className="badge badge--draft">draft pending</span>
+                        ) : null}
+                      </>
+                    }
+                    controls={
+                      <BlockControls
+                        siteId={siteId}
+                        pageId={activePageId}
+                        blockId={block.id}
+                        blockName={definition?.name ?? 'this block'}
+                        isHidden={block.is_hidden}
+                        orderedIds={orderedIds}
+                      />
+                    }
+                  >
                     {definition && (
                       <BlockAppearance
                         siteId={siteId}
@@ -291,7 +319,7 @@ export default async function SiteEditorPage({
                         No block definition joined — check the foreign key.
                       </p>
                     )}
-                  </div>
+                  </CollapsibleBlock>
                 </section>
               );
             })}

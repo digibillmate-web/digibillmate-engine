@@ -301,8 +301,19 @@ const isCarousel = carouselSlides.length > 1;
    * slide is already visible and the arrows simply do nothing, rather than the
    * banner disappearing entirely.
    */
-  /* 3s between slides, matching the reference's swiper delay. */
-  const AUTOPLAY_MS = 3000;
+  /**
+   * How long a slide holds. Read from the theme so it is editable per site,
+   * and clamped for the same reason the rail clamps it — the value comes from
+   * an operator-entered field.
+   */
+  const slideSeconds = Number.parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue('--dbm-slide-seconds'),
+  );
+
+  const AUTOPLAY_MS =
+    Number.isFinite(slideSeconds) && slideSeconds > 0
+      ? Math.min(Math.max(slideSeconds, 2), 12) * 1000
+      : 3000;
 
   document.querySelectorAll<HTMLElement>('[data-carousel="true"]').forEach((carousel) => {
     const slides = Array.from(carousel.querySelectorAll<HTMLElement>('.hero__slide'));

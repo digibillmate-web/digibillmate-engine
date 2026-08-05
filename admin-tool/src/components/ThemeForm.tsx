@@ -171,6 +171,20 @@ export default function ThemeForm({
                       </select>
                     )}
 
+                    {token.kind === 'number' && (
+                      <input
+                        id={`t-${token.key}`}
+                        className="ef__input"
+                        type="number"
+                        inputMode="decimal"
+                        min={token.min}
+                        max={token.max}
+                        step={token.step}
+                        value={raw}
+                        onChange={(e) => set(token.key, e.target.value)}
+                      />
+                    )}
+
                     {token.kind === 'text' && (
                       <input
                         id={`t-${token.key}`}

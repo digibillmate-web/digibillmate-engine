@@ -141,8 +141,21 @@ const { label, autoplay = false, class: className = '' } = Astro.props;
    * three cards with only three cards in it has nowhere to scroll, and dead
    * controls invite clicks that do nothing.
    */
-  /* 3s between advances, matching the reference's swiper delay. */
-  const AUTOPLAY_MS = 3000;
+  /**
+   * How long a card holds before the rail advances.
+   *
+   * Read from the theme so it is editable per site rather than compiled in.
+   * Clamped because the value arrives from a text field: a zero or a stray
+   * character would otherwise spin the rail continuously or stop it dead.
+   */
+  const slideSeconds = Number.parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue('--dbm-slide-seconds'),
+  );
+
+  const AUTOPLAY_MS =
+    Number.isFinite(slideSeconds) && slideSeconds > 0
+      ? Math.min(Math.max(slideSeconds, 2), 12) * 1000
+      : 3000;
 
   document.querySelectorAll<HTMLElement>('[data-rail]').forEach((rail) => {
     const track = rail.querySelector<HTMLElement>('[data-rail-track]');

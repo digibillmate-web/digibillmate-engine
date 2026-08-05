@@ -45,6 +45,9 @@
 
   /* Layout */
   --dbm-container: 1140px;
+
+  /* Motion — seconds a hero slide or carousel card holds. Read by script. */
+  --dbm-slide-seconds: 3;
 }
 
 *,

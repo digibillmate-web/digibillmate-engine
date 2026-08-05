@@ -350,9 +350,45 @@ table.data tbody tr:hover {
   font-weight: 700;
 }
 
+/* The whole label area is the expand target, so the row is easy to hit. */
+.block__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.block__chevron {
+  color: var(--admin-text-muted);
+  font-size: 0.8rem;
+}
+
+.block__labels {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .block__name {
   margin: 0;
   font-size: 1rem;
+}
+
+/* A collapsed row shows the block's own words rather than only its type. */
+.block__summary {
+  font-size: 0.8rem;
+  color: var(--admin-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .block__key {
@@ -366,6 +402,12 @@ table.data tbody tr:hover {
 
 .block__body {
   padding: 1.1rem;
+  border-top: 1px solid var(--admin-border);
+}
+
+/* Collapsed blocks have no body, so the header's own rule would hang. */
+.block__head {
+  border-bottom: 0;
 }
 
 /* --- Schema-driven field display -------------------------------------- */

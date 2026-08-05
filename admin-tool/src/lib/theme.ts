@@ -6,9 +6,9 @@
  * nothing in the database knows about CSS.
  */
 
-export type TokenKind = 'color' | 'font' | 'image' | 'text';
+export type TokenKind = 'color' | 'font' | 'image' | 'text' | 'number';
 
-export type TokenGroup = 'Brand' | 'Page' | 'Typography' | 'Site';
+export type TokenGroup = 'Brand' | 'Page' | 'Typography' | 'Motion' | 'Site';
 
 export interface TokenSpec {
   key: string;
@@ -16,9 +16,19 @@ export interface TokenSpec {
   kind: TokenKind;
   group: TokenGroup;
   hint?: string;
+  /** Bounds for kind: 'number'. */
+  min?: number;
+  max?: number;
+  step?: number;
 }
 
-export const TOKEN_GROUPS: TokenGroup[] = ['Brand', 'Page', 'Typography', 'Site'];
+export const TOKEN_GROUPS: TokenGroup[] = [
+  'Brand',
+  'Page',
+  'Typography',
+  'Motion',
+  'Site',
+];
 
 /**
  * The tokens the site-builder components actually consume.
@@ -104,6 +114,18 @@ export const THEME_TOKENS: TokenSpec[] = [
     kind: 'font',
     group: 'Typography',
     hint: 'Paragraphs, buttons and navigation',
+  },
+
+  // --- Motion -------------------------------------------------------------
+  {
+    key: 'slide-seconds',
+    label: 'Slide speed',
+    kind: 'number',
+    group: 'Motion',
+    min: 2,
+    max: 12,
+    step: 0.5,
+    hint: 'Seconds each hero slide and carousel card holds before the next one. Lower is faster.',
   },
 
   // --- Site ---------------------------------------------------------------
