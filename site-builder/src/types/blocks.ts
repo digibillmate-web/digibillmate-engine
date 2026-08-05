@@ -99,6 +99,8 @@ export interface Reason {
 export interface WhyChooseUsContent {
   heading?: string;
   reasons: Reason[];
+  /** Sits between the two columns of reasons on a wide screen. */
+  image?: Image;
 }
 
 /** page_banner */

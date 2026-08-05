@@ -142,6 +142,7 @@ const CONTENT_MAPPERS = {
       title: r.title,
       description: r.description,
     })),
+    ...(c.image_url ? { image: { src: c.image_url, alt: c.image_alt ?? '' } } : {}),
   }),
 
   hero: (c) => ({

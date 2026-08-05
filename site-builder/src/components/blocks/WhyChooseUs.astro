@@ -3,102 +3,151 @@ import type { WhyChooseUsContent } from '../../types/blocks';
 
 type Props = WhyChooseUsContent;
 
-const { heading, reasons } = Astro.props;
+const { heading, reasons, image } = Astro.props;
 
 /**
  * Stored icons are slugs, not glyphs, so the content stays presentation-free
- * and an admin tool can offer a fixed picker. Unknown slugs fall back to a
- * neutral mark rather than rendering the raw slug text.
+ * and an admin tool can offer a fixed picker.
+ *
+ * These are line drawings rather than emoji. Emoji render in each platform's
+ * own colour and style, so a set of them never reads as one designed family
+ * the way a stroked set does — which is what the reference uses.
  */
 const ICONS: Record<string, string> = {
-  shield: '🛡',
-  clock: '🕑',
-  rupee: '₹',
-  wrench: '🔧',
-  star: '★',
-  check: '✓',
-  tools: '🛠',
-  car: '🚗',
+  shield:
+    '<path d="M12 3l7 3v5c0 4.4-3 8.3-7 10-4-1.7-7-5.6-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  rupee: '<path d="M7 4h10M7 9h10M7 4c5 0 7 1.5 7 4s-2 4-7 4l7 8"/>',
+  wrench:
+    '<path d="M15 3a5 5 0 00-4.6 7L3 17.4 6.6 21l7.4-7.4A5 5 0 1015 3z"/>',
+  star: '<path d="M12 3l2.7 5.7 6.3.9-4.5 4.4 1 6.3-5.5-2.9-5.5 2.9 1-6.3L3 9.6l6.3-.9L12 3z"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5-5"/>',
+  tools:
+    '<path d="M6 3l3 3-2 2-3-3zM4 20l8-8M14 6l6 6-2 2-6-6z"/><circle cx="17" cy="17" r="3"/>',
+  car: '<path d="M4 16v-3l2-5h12l2 5v3"/><path d="M3 16h18v3h-3v-2H6v2H3z"/><circle cx="7.5" cy="16.5" r="1.5"/><circle cx="16.5" cy="16.5" r="1.5"/>',
 };
 
-const iconFor = (slug?: string) => (slug && ICONS[slug]) || '◆';
+const iconFor = (slug?: string) => (slug && ICONS[slug]) || '<circle cx="12" cy="12" r="8"/>';
+
+/*
+ * Split into two flanking columns around the centre image. An odd count puts
+ * the extra reason on the left, which keeps the image visually centred rather
+ * than letting a lone right-hand item drag it off axis.
+ */
+const half = Math.ceil(reasons.length / 2);
+const columns = image ? [reasons.slice(0, half), reasons.slice(half)] : [reasons];
 ---
 
 <section class="why dbm-section">
   <div class="dbm-container">
     {heading && <h2 class="dbm-heading why__heading">{heading}</h2>}
-    <ul class="why__grid" data-stagger>
-      {reasons.map((reason) => (
-        <li class="why__card dbm-surface">
-          <span class="why__icon" aria-hidden="true">{iconFor(reason.icon)}</span>
-          <h3 class="why__title">{reason.title}</h3>
-          {reason.description && <p class="why__desc">{reason.description}</p>}
-        </li>
+
+    <div class="why__layout" class:list={[{ 'why__layout--split': image }]}>
+      {columns.map((column, columnIndex) => (
+        <>
+          {/* The image is a sibling of the columns so it can sit between them
+              in source order, which is also the order it should be read in. */}
+          {image && columnIndex === 1 && (
+            <div class="why__media">
+              <img src={image.src} alt={image.alt} loading="lazy" />
+            </div>
+          )}
+
+          <ul class="why__list" data-stagger>
+            {column.map((reason) => (
+              <li class="why__item">
+                <span class="why__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                       stroke-linecap="round" stroke-linejoin="round" set:html={iconFor(reason.icon)} />
+                </span>
+                <h3 class="why__title">{reason.title}</h3>
+                {reason.description && <p class="why__desc">{reason.description}</p>}
+              </li>
+            ))}
+          </ul>
+        </>
       ))}
-    </ul>
+    </div>
   </div>
 </section>
 
 <style>
-  .why__heading {
-    text-align: center;
+  .why__layout {
+    display: grid;
+    gap: var(--dbm-space-lg);
   }
 
-  .why__grid {
+  /* Single column of reasons when there is no centre image to flank. */
+  .why__list {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    gap: var(--dbm-space-md);
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: var(--dbm-space-lg);
+    align-content: start;
   }
 
-  .why__card {
-    text-align: center;
-    background: var(--dbm-color-background);
-    border: 1px solid var(--dbm-color-border);
-    border-radius: var(--dbm-radius-md);
-    padding: var(--dbm-space-lg);
-    box-shadow: var(--dbm-shadow-sm);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  .why__item {
+    /* A hairline between stacked reasons instead of a card border: the
+       reference separates them rather than boxing them. */
+    padding-bottom: var(--dbm-space-lg);
+    border-bottom: 1px solid var(--dbm-color-border);
   }
 
-  .why__card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--dbm-shadow-md);
+  .why__item:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
   }
 
   .why__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 60px;
-    height: 60px;
+    display: block;
+    color: var(--dbm-color-primary);
     margin-bottom: var(--dbm-space-sm);
-    border-radius: 50%;
-    background: var(--dbm-color-primary);
-    color: var(--dbm-color-primary-contrast);
-    font-size: var(--dbm-text-xl);
-    line-height: 1;
+  }
+
+  .why__icon svg {
+    width: 44px;
+    height: 44px;
   }
 
   .why__title {
     font-family: var(--dbm-font-heading);
     font-size: var(--dbm-text-lg);
+    font-weight: 700;
     margin: 0 0 var(--dbm-space-xs);
   }
 
   .why__desc {
     margin: 0;
     color: var(--dbm-color-text-muted);
-    font-size: var(--dbm-text-sm);
+    max-width: 46ch;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .why__card,
-    .why__card:hover {
-      transition: none;
-      transform: none;
+  .why__media img {
+    width: 100%;
+    border-radius: var(--dbm-radius-lg);
+  }
+
+  @media (min-width: 900px) {
+    /* Reasons | image | reasons. The image column is widest because it is
+       carrying a photograph rather than a few lines of text. */
+    .why__layout--split {
+      grid-template-columns: 1fr 1.1fr 1fr;
+      align-items: center;
+      gap: var(--dbm-space-xl);
+    }
+
+    /* Right-hand reasons align toward the image, mirroring the left column. */
+    .why__layout--split .why__list:last-child .why__desc {
+      margin-left: 0;
+    }
+  }
+
+  @media (max-width: 899px) {
+    /* Stacked, with the image between the two groups rather than pinned to
+       the top, so it still breaks up the run of text. */
+    .why__media {
+      order: 0;
     }
   }
 </style>
