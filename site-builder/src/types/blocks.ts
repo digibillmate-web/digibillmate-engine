@@ -177,6 +177,12 @@ export interface ServicesGridContent {
   currency?: string;
   /** Defaults to 'rail'. */
   layout?: ServicesLayout;
+  /**
+   * Where a service's enquire button goes. Filled at render time from the
+   * page carrying the enquiry form, so it is absent when the site has none
+   * and no button is drawn rather than one that leads nowhere.
+   */
+  enquiryHref?: string;
 }
 
 /** pricing_offers */

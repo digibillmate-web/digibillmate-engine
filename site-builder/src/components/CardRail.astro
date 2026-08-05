@@ -64,7 +64,17 @@ const { label, autoplay = false, class: className = '' } = Astro.props;
     scroll-behavior: smooth;
     /* Room for card shadows, which a clipped overflow would shave off. */
     padding-inline: 2px;
-    scrollbar-width: thin;
+    /*
+     * The track still scrolls by touch, wheel and keyboard; only the bar is
+     * hidden. The arrows and the peeking next card are what say "there is
+     * more", and a permanent grey bar under every rail reads as browser
+     * chrome that leaked into the design.
+     */
+    scrollbar-width: none;
+  }
+
+  .rail__track::-webkit-scrollbar {
+    display: none;
   }
 
   .rail__track > li {

@@ -163,10 +163,26 @@ const isCarousel = carouselSlides.length > 1;
     pointer-events: auto;
   }
 
+  /*
+   * Reserves the slide's space before the image arrives. Without a ratio the
+   * banner is zero-height until it loads and then shoves the whole page down,
+   * which both looks broken and moves every section out from under anything
+   * measuring positions.
+   *
+   * Only applies to the single-image case; the carousel sets its own ratio.
+   */
   .hero__slide img {
     display: block;
     width: 100%;
     height: auto;
+    aspect-ratio: 16 / 6;
+    object-fit: cover;
+  }
+
+  @media (max-width: 767px) {
+    .hero__slide img {
+      aspect-ratio: 4 / 3;
+    }
   }
 
   .hero__arrow {

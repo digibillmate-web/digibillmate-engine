@@ -5,7 +5,14 @@ import { serviceAnchor } from '../../lib/service-anchor';
 
 type Props = ServicesGridContent;
 
-const { heading, intro, services, currency = '₹', layout = 'rail' } = Astro.props;
+const {
+  heading,
+  intro,
+  services,
+  currency = '₹',
+  layout = 'rail',
+  enquiryHref,
+} = Astro.props;
 
 /**
  * Stored prices are plain amounts ("2,499"); the symbol is presentation.
@@ -51,6 +58,15 @@ function formatPrice(price: string | number): string {
                   <span class="services__price-amount">{formatPrice(service.price)}</span>
                 </p>
               )}
+
+              {enquiryHref && (
+                <a
+                  class="dbm-btn dbm-btn--primary services__enquire"
+                  href={`${enquiryHref}?service=${encodeURIComponent(service.title)}`}
+                >
+                  Enquire Now
+                </a>
+              )}
             </div>
           </article>
         ))}
@@ -74,12 +90,30 @@ function formatPrice(price: string | number): string {
                 : service.title}
             </h3>
             {service.description && <p class="services__desc">{service.description}</p>}
-            {service.price !== undefined && service.price !== '' && (
+            {(service.price !== undefined && service.price !== '') || service.href ? (
               <p class="services__price">
-                <span class="services__price-label">From</span>
-                <span class="services__price-amount">{formatPrice(service.price)}</span>
+                {service.price !== undefined && service.price !== '' && (
+                  <>
+                    <span class="services__price-label">From</span>
+                    <span class="services__price-amount">{formatPrice(service.price)}</span>
+                  </>
+                )}
+
+                {/*
+                  The arrow repeats the title's link rather than adding a
+                  second destination, so the obvious thing to click and the
+                  thing that reads as a link go to the same place. Hidden from
+                  assistive tech for that reason — it is a duplicate.
+                */}
+                {service.href && (
+                  <a class="services__go" href={service.href} aria-hidden="true" tabindex="-1">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M5 12h13M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </a>
+                )}
               </p>
-            )}
+            ) : null}
           </div>
         </li>
       ))}
@@ -169,6 +203,41 @@ function formatPrice(price: string | number): string {
     color: var(--dbm-color-primary);
   }
 
+  /* Circular arrow at the end of the price row, matching the reference. */
+  .services__go {
+    margin-left: auto;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--dbm-color-primary);
+    color: var(--dbm-color-primary-contrast);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  }
+
+  .services__go svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Responds to hovering the card, not just the arrow itself — the whole
+     card is what someone aims at. */
+  .services__card:hover .services__go {
+    transform: translateX(3px);
+    background: var(--dbm-color-secondary);
+    color: var(--dbm-color-secondary-contrast);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .services__go,
+    .services__card:hover .services__go {
+      transition: none;
+      transform: none;
+    }
+  }
+
   /*
    * Detail layout: one full-width row per service, image and copy side by
    * side, sides swapping down the page. The alternation is what stops a long
@@ -211,6 +280,10 @@ function formatPrice(price: string | number): string {
   .services__detail .services__price {
     border-top: 0;
     padding-top: 0;
+  }
+
+  .services__enquire {
+    margin-top: var(--dbm-space-md);
   }
 
   @media (min-width: 768px) {

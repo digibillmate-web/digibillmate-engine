@@ -35,6 +35,7 @@ function composePage(
   page: ExportedPage,
   home: ExportedPage,
   detailServicesHref?: string,
+  enquiryHref?: string,
 ): BlockContent[] {
   const ownBefore = pick(CHROME_BEFORE, page);
   const ownAfter = pick(CHROME_AFTER, page);
@@ -46,11 +47,28 @@ function composePage(
   ];
 
   return blocks.map((block) =>
-    linkServicesToDetail(
-      fillPageBanner(markCurrentNav(block, page), page),
-      detailServicesHref,
+    addEnquiryLink(
+      linkServicesToDetail(
+        fillPageBanner(markCurrentNav(block, page), page),
+        detailServicesHref,
+      ),
+      enquiryHref,
     ),
   );
+}
+
+/**
+ * Gives the detail layout somewhere to send an enquiry.
+ *
+ * Only the detail layout: the summary cards already link through to the
+ * detail page, and a second call to action on a card that small competes with
+ * the one that matters.
+ */
+function addEnquiryLink(block: BlockContent, enquiryHref?: string): BlockContent {
+  if (block.type !== 'services_grid' || block.content.layout !== 'detail') return block;
+  if (!enquiryHref) return block;
+
+  return { ...block, content: { ...block.content, enquiryHref } };
 }
 
 /**
@@ -62,6 +80,16 @@ function findDetailServicesHref(pages: ExportedPage[]): string | undefined {
     candidate.blocks.some(
       (block) => block.type === 'services_grid' && block.content.layout === 'detail',
     ),
+  );
+
+  if (!match) return undefined;
+  return match.slug ? `/${match.slug}/` : '/';
+}
+
+/** The page carrying the enquiry form, which is where an enquiry should go. */
+function findEnquiryHref(pages: ExportedPage[]): string | undefined {
+  const match = pages.find((candidate) =>
+    candidate.blocks.some((block) => block.type === 'enquiry_form'),
   );
 
   if (!match) return undefined;
@@ -219,7 +247,12 @@ const title = page.slug === '' ? brand : `${page.title} — ${brand}`;
 
 const description = site.theme['--dbm-seo-description']?.trim() || undefined;
 
-const blocks = composePage(page, home, findDetailServicesHref(site.pages));
+const blocks = composePage(
+  page,
+  home,
+  findDetailServicesHref(site.pages),
+  findEnquiryHref(site.pages),
+);
 ---
 
 <SiteLayout

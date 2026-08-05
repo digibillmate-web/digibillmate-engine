@@ -208,13 +208,22 @@ img {
   transition-delay: calc(var(--char-i, 0) * 0.03s);
 }
 
-.has-reveal [data-reveal]:not(.is-revealed) .dbm-heading .char {
+/*
+ * Keyed off the heading itself, not the section around it.
+ *
+ * Sections here run to 900px and often lead with an image, so a heading can
+ * sit hundreds of pixels below the point where its section first touches the
+ * viewport. Tying the letters to the section meant they finished animating
+ * while still well below the fold, and the heading was simply present by the
+ * time anyone scrolled to it.
+ */
+.has-reveal [data-reveal-text]:not(.is-revealed) .char {
   opacity: 0;
   transform: translateX(40px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .has-reveal [data-reveal]:not(.is-revealed) .dbm-heading .char {
+  .has-reveal [data-reveal-text]:not(.is-revealed) .char {
     opacity: 1;
     transform: none;
   }

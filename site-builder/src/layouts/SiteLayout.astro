@@ -122,9 +122,16 @@ const pageStyle = toDeclarations(pageTheme);
         });
 
         heading.replaceChildren(frag);
+
+        // Its own reveal target: a heading can sit far below the point where
+        // its section enters view, and the letters should animate when the
+        // heading is looked at, not when the section starts to appear.
+        heading.setAttribute('data-reveal-text', '');
       }
 
-      const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'));
+      const targets = Array.from(
+        document.querySelectorAll<HTMLElement>('[data-reveal], [data-reveal-text]'),
+      );
 
       if (targets.length > 0) {
         root.classList.add('has-reveal');
@@ -169,8 +176,21 @@ const pageStyle = toDeclarations(pageTheme);
 
         window.addEventListener('scroll', scheduleSweep, { passive: true });
         window.addEventListener('resize', scheduleSweep);
-        window.addEventListener('load', scheduleSweep);
-        sweep();
+
+        /*
+         * The first sweep waits for layout to settle.
+         *
+         * Running it immediately measured positions before the images had
+         * loaded, when everything below the hero still sat near the top of the
+         * document. Sections far below the fold passed the "already reached"
+         * test, revealed, and then got pushed down by several hundred pixels
+         * of image — so by the time anyone scrolled to them their animation
+         * had long finished and they simply appeared, fully formed.
+         *
+         * The observer covers the interim, and it measures for itself.
+         */
+        if (document.readyState === 'complete') scheduleSweep();
+        else window.addEventListener('load', scheduleSweep, { once: true });
       }
     </script>
   </body>
