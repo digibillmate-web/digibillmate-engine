@@ -30,6 +30,8 @@ export interface ExportedPage {
 export interface ExportedSite {
   id: string;
   subdomain: string;
+  /** Where the enquiry form posts. Null means WhatsApp/email only. */
+  enquiryEndpoint?: string | null;
   customDomain: string | null;
   status: string;
   /** Resolved CSS custom properties, already prefixed (--dbm-*). */

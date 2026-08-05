@@ -82,6 +82,17 @@ const canSend = hasWhatsapp || hasEmail;
           <textarea id="enq-message" name="message" rows="4"></textarea>
         </div>
 
+        {/*
+          Honeypot. Hidden from people and from assistive tech, left visible to
+          anything that fills every field it finds. aria-hidden and tabindex
+          keep it out of the keyboard path, and autocomplete off stops a
+          browser helpfully filling it in on a real visitor's behalf.
+        */}
+        <div class="enquiry__hp" aria-hidden="true">
+          <label for="enq-website">Website</label>
+          <input id="enq-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+
         <div class="enquiry__actions">
           <button class="dbm-btn dbm-btn--primary" type="submit">{submitLabel}</button>
           <span class="enquiry__route">
@@ -103,6 +114,15 @@ const canSend = hasWhatsapp || hasEmail;
 <style>
   .enquiry__form {
     max-width: 720px;
+  }
+
+  /* Off-screen rather than display:none — some bots skip hidden fields. */
+  .enquiry__hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
   }
 
   .enquiry__grid {
@@ -240,6 +260,39 @@ const canSend = hasWhatsapp || hasEmail;
 
       const data = new FormData(form);
       const value = (name: string) => String(data.get(name) ?? '').trim();
+
+      /*
+       * Record the enquiry before handing off.
+       *
+       * Fire-and-forget on purpose. WhatsApp opening is what the visitor is
+       * waiting for, and it must not be delayed — or prevented — by a network
+       * call to a service they never asked about. If the POST fails the
+       * enquiry still reaches the business the way it always has.
+       *
+       * keepalive so the request survives the tab navigating to WhatsApp,
+       * which is the very next thing that happens.
+       */
+      const endpoint = document.body.dataset.enquiryEndpoint;
+      const siteId = document.body.dataset.siteId;
+
+      if (endpoint && siteId) {
+        fetch(endpoint, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          keepalive: true,
+          body: JSON.stringify({
+            siteId,
+            name: value('name'),
+            mobile: value('mobile'),
+            email: value('email'),
+            service: value('service'),
+            message: value('message'),
+            website: value('website'),
+          }),
+        }).catch(() => {
+          /* Silent: the handoff below is the path that matters to the visitor. */
+        });
+      }
 
       const lines = [
         `Name: ${value('name')}`,

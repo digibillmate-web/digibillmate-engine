@@ -11,9 +11,14 @@ interface Props {
   pageTheme?: Record<string, string>;
   /** This page's scroll-reveal style. */
   revealAnimation?: string;
+  /** Identifies the site to the enquiry endpoint. */
+  siteId?: string;
+  /** Absent when the platform has no intake endpoint configured. */
+  enquiryEndpoint?: string;
 }
 
-const { title, description, theme, pageTheme, revealAnimation } = Astro.props;
+const { title, description, theme, pageTheme, revealAnimation, siteId, enquiryEndpoint } =
+  Astro.props;
 
 // Every theme key is exported as a --dbm-* custom property, including
 // favicon-url, which isn't a CSS value — it belongs in a <link> tag instead.
@@ -60,7 +65,11 @@ const pageStyle = toDeclarations(pageTheme);
     {/* One step more specific than the site theme, so the page wins. */}
     {pageStyle && <style is:inline set:html={`:root:root:root { ${pageStyle} }`}></style>}
   </head>
-  <body data-reveal-anim={revealAnimation}>
+  <body
+    data-reveal-anim={revealAnimation}
+    data-site-id={siteId}
+    data-enquiry-endpoint={enquiryEndpoint}
+  >
     <main>
       <slot />
     </main>

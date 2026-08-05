@@ -532,6 +532,15 @@ async function main() {
     subdomain: site.subdomain,
     customDomain: site.custom_domain ?? null,
     status: site.status,
+    /*
+     * Where the enquiry form posts. Baked in at build rather than stored per
+     * site, because it is a property of the platform, not of the client — one
+     * endpoint serves every site and moving it should not mean editing rows.
+     *
+     * Absent when unset, and the form falls back to WhatsApp alone rather
+     * than posting into the void.
+     */
+    enquiryEndpoint: process.env.ENQUIRY_ENDPOINT?.trim() || null,
     theme,
     pages,
     meta: {
