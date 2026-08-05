@@ -5,10 +5,13 @@ type Props = PageBannerContent;
 
 const { title, subtitle, image, breadcrumb, showBreadcrumb = true } = Astro.props;
 
-// A dark scrim keeps the title legible over whatever photo is uploaded, rather
-// than depending on the image happening to be dark in the right places.
+/*
+ * A heavy scrim, deliberately. These sites reuse promotional artwork that
+ * already carries its own headline text, so a light overlay leaves two sets
+ * of words competing. Better a flatter photo than an unreadable title.
+ */
 const style = image
-  ? `background-image: linear-gradient(rgb(0 0 0 / 0.55), rgb(0 0 0 / 0.55)), url('${image.src}')`
+  ? `background-image: linear-gradient(rgb(0 0 0 / 0.72), rgb(0 0 0 / 0.72)), url('${image.src}')`
   : undefined;
 ---
 
@@ -51,6 +54,13 @@ const style = image
     line-height: 1.15;
     margin: 0;
     color: inherit;
+  }
+
+  /* Lifts the text off whatever detail survives the scrim. */
+  .pagebanner--photo .pagebanner__title,
+  .pagebanner--photo .pagebanner__subtitle,
+  .pagebanner--photo .pagebanner__crumb {
+    text-shadow: 0 2px 8px rgb(0 0 0 / 0.6);
   }
 
   .pagebanner__subtitle {

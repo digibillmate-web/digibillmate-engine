@@ -696,31 +696,112 @@ table.data tbody tr:hover {
   min-width: 220px;
 }
 
-.bgpicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-left: auto;
+/* --- Per-block appearance panel --------------------------------------- */
+
+.appearance {
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed var(--admin-border);
 }
 
-.bgpicker__label {
-  font-size: 0.72rem;
-  color: var(--admin-text-muted);
-  font-weight: 600;
-}
-
-.bgpicker__select {
-  padding: 0.25rem 0.4rem;
-  border: 1px solid var(--admin-border);
-  border-radius: 5px;
+.appearance__toggle {
+  background: none;
+  border: 0;
+  padding: 0;
   font: inherit;
   font-size: 0.78rem;
-  background: var(--admin-surface);
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  cursor: pointer;
 }
 
-/* The picker already claims the free space; the controls follow it. */
-.bgpicker + .blockctl {
-  margin-left: 0.4rem;
+.appearance__toggle:hover {
+  color: var(--admin-primary);
+}
+
+.appearance__badge {
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: #eef0f4;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+}
+
+.appearance__body {
+  margin-top: 0.7rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: #fafbfc;
+}
+
+.appearance__row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.appearance__row .ef__label {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.appearance__select {
+  width: auto;
+  min-width: 160px;
+}
+
+.appearance__heading {
+  margin: 0 0 0.45rem;
+}
+
+.appearance__tokens {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.appearance__tokens li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+}
+
+.appearance__swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid var(--admin-border);
+  flex-shrink: 0;
+}
+
+.appearance__font {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.appearance__tokenlabel {
+  color: var(--admin-text-muted);
+}
+
+.appearance__tokenvalue {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--admin-text);
 }
 
 .blockctl {

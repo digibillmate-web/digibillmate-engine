@@ -8,7 +8,7 @@ import DeployHookForm from '@/components/DeployHookForm';
 import ThemeForm from '@/components/ThemeForm';
 import RenameSiteForm from '@/components/RenameSiteForm';
 import BlockControls from '@/components/BlockControls';
-import BlockBackgroundPicker from '@/components/BlockBackgroundPicker';
+import BlockAppearance from '@/components/BlockAppearance';
 import AddBlockBar, { type CatalogEntry } from '@/components/AddBlockBar';
 import PagesManager, { type PageRow } from '@/components/PagesManager';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
@@ -112,6 +112,14 @@ export default async function SiteEditorPage({
   }));
 
   const hiddenCount = blocks.filter((block) => block.is_hidden).length;
+
+  // Resolved once here so every block's appearance panel shows the colours
+  // actually in use, rather than each recomputing the archetype merge.
+  const siteTheme = effectiveTheme(
+    archetype?.default_theme,
+    site.theme,
+    Boolean(site.theme_linked),
+  );
 
   const tabHref = (next: Tab) =>
     next === 'content' ? `/sites/${siteId}` : `/sites/${siteId}?tab=${next}`;
@@ -248,12 +256,6 @@ export default async function SiteEditorPage({
                       <span className="badge badge--draft">draft pending</span>
                     ) : null}
 
-                    <BlockBackgroundPicker
-                      siteId={siteId}
-                      blockId={block.id}
-                      current={block.settings?.background ?? 'default'}
-                    />
-
                     <BlockControls
                       siteId={siteId}
                       pageId={activePageId}
@@ -265,6 +267,16 @@ export default async function SiteEditorPage({
                   </header>
 
                   <div className="block__body">
+                    {definition && (
+                      <BlockAppearance
+                        siteId={siteId}
+                        blockId={block.id}
+                        blockKey={definition.key}
+                        background={block.settings?.background ?? 'default'}
+                        theme={siteTheme}
+                      />
+                    )}
+
                     {definition ? (
                       <SchemaForm
                         siteId={siteId}
