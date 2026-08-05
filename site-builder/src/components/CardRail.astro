@@ -27,7 +27,7 @@ const { label, autoplay = false, class: className = '' } = Astro.props;
     </svg>
   </button>
 
-  <ul class={`rail__track ${className}`} data-rail-track aria-label={label}>
+  <ul class={`rail__track ${className}`} data-rail-track data-stagger aria-label={label}>
     <slot />
   </ul>
 

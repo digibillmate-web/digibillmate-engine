@@ -9,7 +9,7 @@ const { heading, brands } = Astro.props;
 <section class="brands dbm-section">
   <div class="dbm-container">
     {heading && <h2 class="dbm-heading brands__heading">{heading}</h2>}
-    <ul class="brands__grid">
+    <ul class="brands__grid" data-stagger>
       {brands.map((brand) => (
         <li class="brands__item">
           {brand.logo

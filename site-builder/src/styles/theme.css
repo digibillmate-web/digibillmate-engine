@@ -53,6 +53,22 @@
   box-sizing: border-box;
 }
 
+/*
+ * The header is sticky, so an anchor jump would otherwise land the target
+ * underneath it. scroll-padding on the scroll container fixes every anchor at
+ * once, including ones added later, without each section opting in.
+ */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   margin: 0;
   background: var(--dbm-color-background);
@@ -118,14 +134,45 @@ img {
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
+/*
+ * Staggered children.
+ *
+ * A section whose cards all appear on the same frame reads as a page-load
+ * flash rather than as motion. Containers opt in with data-stagger and their
+ * direct children settle in sequence once the section itself is revealed.
+ *
+ * Capped at eight: past roughly half a second of lead-in the last card is
+ * just late, and a rail can hold more children than anyone will wait for.
+ */
+[data-stagger] > * {
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.has-reveal [data-reveal]:not(.is-revealed) [data-stagger] > * {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+[data-reveal].is-revealed [data-stagger] > *:nth-child(1) { transition-delay: 0.06s; }
+[data-reveal].is-revealed [data-stagger] > *:nth-child(2) { transition-delay: 0.12s; }
+[data-reveal].is-revealed [data-stagger] > *:nth-child(3) { transition-delay: 0.18s; }
+[data-reveal].is-revealed [data-stagger] > *:nth-child(4) { transition-delay: 0.24s; }
+[data-reveal].is-revealed [data-stagger] > *:nth-child(5) { transition-delay: 0.30s; }
+[data-reveal].is-revealed [data-stagger] > *:nth-child(6) { transition-delay: 0.36s; }
+[data-reveal].is-revealed [data-stagger] > *:nth-child(7) { transition-delay: 0.42s; }
+[data-reveal].is-revealed [data-stagger] > *:nth-child(n + 8) { transition-delay: 0.48s; }
+
 @media (prefers-reduced-motion: reduce) {
-  .has-reveal [data-reveal]:not(.is-revealed) {
+  .has-reveal [data-reveal]:not(.is-revealed),
+  .has-reveal [data-reveal]:not(.is-revealed) [data-stagger] > * {
     opacity: 1;
     transform: none;
   }
 
-  [data-reveal] {
+  [data-reveal],
+  [data-stagger] > * {
     transition: none;
+    transition-delay: 0s;
   }
 }
 
@@ -141,19 +188,55 @@ img {
   padding-inline: var(--dbm-space-md);
 }
 
+/*
+ * Section headings are centred with a short accent rule beneath them. This is
+ * the dominant sectioning device on the reference site and is most of why a
+ * plain left-aligned h2 reads as a different, flatter page.
+ */
 .dbm-heading {
   font-family: var(--dbm-font-heading);
   font-size: var(--dbm-text-2xl);
   line-height: 1.2;
-  margin: 0 0 var(--dbm-space-sm);
+  margin: 0 0 var(--dbm-space-md);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.dbm-heading::after {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 3px;
+  margin: var(--dbm-space-sm) auto 0;
+  border-radius: 2px;
+  background: var(--dbm-color-primary);
+}
+
+/* On a coloured band the primary accent can vanish into the background, so
+   the rule picks up the band's own contrast colour instead. */
+.blockbg--primary .dbm-heading::after,
+.blockbg--secondary .dbm-heading::after {
+  background: currentColor;
 }
 
 .dbm-intro {
   color: var(--dbm-color-text-muted);
   max-width: 60ch;
-  margin: 0 0 var(--dbm-space-lg);
+  margin: 0 auto var(--dbm-space-lg);
+  text-align: center;
 }
 
+.blockbg--primary .dbm-intro,
+.blockbg--secondary .dbm-intro {
+  color: inherit;
+  opacity: 0.9;
+}
+
+/*
+ * Buttons lift rather than fade. A plain opacity change reads as the button
+ * going dim; the reference lifts them, which reads as responsive.
+ */
 .dbm-btn {
   display: inline-block;
   padding: var(--dbm-space-sm) var(--dbm-space-lg);
@@ -161,11 +244,32 @@ img {
   font-weight: 600;
   text-decoration: none;
   border: 1px solid transparent;
-  transition: opacity 0.15s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-.dbm-btn:hover {
-  opacity: 0.88;
+.dbm-btn:hover,
+.dbm-btn:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--dbm-shadow-md);
+}
+
+.dbm-btn:active {
+  transform: translateY(0);
+}
+
+.dbm-btn--secondary:hover,
+.dbm-btn--secondary:focus-visible {
+  border-color: var(--dbm-color-primary);
+  color: var(--dbm-color-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dbm-btn,
+  .dbm-btn:hover,
+  .dbm-btn:focus-visible {
+    transition: none;
+    transform: none;
+  }
 }
 
 .dbm-btn--primary {

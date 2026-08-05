@@ -20,7 +20,7 @@ function formatPrice(price: string | number): string {
   <div class="dbm-container">
     <h2 class="dbm-heading">{heading}</h2>
     {intro && <p class="dbm-intro">{intro}</p>}
-    <ul class="offers__grid">
+    <ul class="offers__grid" data-stagger>
       {offers.map((offer) => (
         <li class="offers__card" class:list={[{ 'offers__card--featured': offer.featured }]}>
           {offer.badge && <span class="offers__badge">{offer.badge}</span>}
