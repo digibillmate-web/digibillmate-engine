@@ -73,6 +73,65 @@ function toCssVars(theme) {
  * and what `client_editable_fields` names. The renderer adapts, not the schema,
  * so this file is the only place the two vocabularies meet.
  */
+/**
+ * Turns whatever someone pasted into a URL Google will actually render.
+ *
+ * Google only frames its own embed URLs, and refuses everything else without
+ * a word — the iframe just stays blank. What people paste is the Share link
+ * (maps.app.goo.gl/...), because that is what Google's Share button gives
+ * them, so treating that as user error would mean the field is unusable.
+ *
+ * A short link is resolved here rather than in the browser: it redirects to a
+ * place URL carrying coordinates, and following it needs a server. Done at
+ * export time it costs one request per build and nothing at page load.
+ *
+ * Fails soft on purpose. A build should not break because a maps redirect
+ * timed out, so an unresolved link is passed through and the renderer falls
+ * back to a query built from the address.
+ */
+const mapUrlCache = new Map();
+
+async function resolveMapUrl(raw) {
+  const url = raw?.trim();
+  if (!url) return undefined;
+
+  // Already embeddable — leave it alone.
+  if (/\/maps\/embed|output=embed/.test(url)) return url;
+  if (mapUrlCache.has(url)) return mapUrlCache.get(url);
+
+  let resolved = url;
+
+  if (/^https?:\/\/(maps\.app\.goo\.gl|goo\.gl\/maps)/.test(url)) {
+    try {
+      const response = await fetch(url, {
+        redirect: 'follow',
+        signal: AbortSignal.timeout(8000),
+      });
+      resolved = response.url || url;
+    } catch (error) {
+      console.warn(`  ! could not resolve map link (${error.message}) — using it as-is`);
+      mapUrlCache.set(url, url);
+      return url;
+    }
+  }
+
+  /*
+   * A place URL carries two coordinate pairs: the @lat,lng viewport centre
+   * and a !3d/!4d pair that is the place itself. The place is what should be
+   * pinned — the viewport centre can sit a street or two away.
+   */
+  const place = resolved.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  const centre = resolved.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  const point = place ?? centre;
+
+  const embed = point
+    ? `https://www.google.com/maps?q=${point[1]},${point[2]}&output=embed`
+    : url;
+
+  mapUrlCache.set(url, embed);
+  return embed;
+}
+
 const CONTENT_MAPPERS = {
   header_nav: (c) => ({
     businessName: c.business_name,
@@ -126,6 +185,7 @@ const CONTENT_MAPPERS = {
     ...(c.read_more_label
       ? { readMore: { label: c.read_more_label, href: c.read_more_href ?? '#' } }
       : {}),
+    ...(c.band_height ? { bandHeight: c.band_height } : {}),
   }),
 
   brand_logos: (c) => ({
@@ -399,6 +459,17 @@ async function main() {
   });
 
   // --- Navigation -----------------------------------------------------------
+
+  /*
+   * Resolved after mapping rather than inside the mapper, which is sync. One
+   * network call per distinct link per build, cached.
+   */
+  for (const page of pages) {
+    for (const block of page.blocks) {
+      if (block.type !== 'contact' || !block.content.mapEmbedUrl) continue;
+      block.content.mapEmbedUrl = await resolveMapUrl(block.content.mapEmbedUrl);
+    }
+  }
 
   /**
    * Pages are the source of truth for navigation, so a new page appears in the

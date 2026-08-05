@@ -3,7 +3,7 @@ import type { AboutSectionContent } from '../../types/blocks';
 
 type Props = AboutSectionContent;
 
-const { heading, body, image, readMore } = Astro.props;
+const { heading, body, image, readMore, bandHeight = 'medium' } = Astro.props;
 
 // Blank lines in the stored text become paragraphs.
 const paragraphs = body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
@@ -22,7 +22,12 @@ const isBand = Boolean(image) && !heading?.trim() && paragraphs.length === 0;
 ---
 
 {isBand ? (
-  <section class="aboutband" id="about" aria-label={image!.alt || 'Highlight'}>
+  <section
+    class="aboutband"
+    class:list={[`aboutband--${bandHeight}`]}
+    id="about"
+    aria-label={image!.alt || 'Highlight'}
+  >
     <img src={image!.src} alt={image!.alt} loading="lazy" />
   </section>
 ) : (
@@ -62,8 +67,26 @@ const isBand = Boolean(image) && !heading?.trim() && paragraphs.length === 0;
   .aboutband img {
     display: block;
     width: 100%;
+    /* Set per height option below; medium is the default. */
     height: clamp(180px, 26vw, 320px);
     object-fit: cover;
+  }
+
+  .aboutband--short img {
+    height: clamp(120px, 16vw, 200px);
+  }
+
+  .aboutband--tall img {
+    height: clamp(260px, 38vw, 520px);
+  }
+
+  /*
+   * Capped below the viewport rather than at it: a band exactly 100vh tall
+   * fills the screen with no hint that the page continues, and reads as the
+   * end of the site.
+   */
+  .aboutband--full img {
+    height: min(80vh, 720px);
   }
 
   .about__inner--split {

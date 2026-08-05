@@ -21,11 +21,18 @@ const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : undefined;
 const rawMap = mapEmbedUrl?.trim();
 const isEmbeddable = Boolean(rawMap && /\/maps\/embed|output=embed/.test(rawMap));
 
-const mapSrc = isEmbeddable
-  ? rawMap
-  : address
-    ? `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`
-    : undefined;
+/*
+ * No stored link means no map. The address alone is not consent to show one —
+ * a contact block that mentions where the workshop is should not therefore
+ * grow a map on every page it appears.
+ */
+const mapSrc = !rawMap
+  ? undefined
+  : isEmbeddable
+    ? rawMap
+    : address
+      ? `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`
+      : undefined;
 
 // A link that was given but cannot be framed still deserves to be reachable.
 const mapLink = !isEmbeddable && rawMap ? rawMap : undefined;

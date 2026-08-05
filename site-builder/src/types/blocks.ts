@@ -77,6 +77,8 @@ export interface AboutSectionContent {
   body: string;
   image?: Image;
   readMore?: Cta;
+  /** Height of the full-width band variant. Defaults to 'medium'. */
+  bandHeight?: 'short' | 'medium' | 'tall' | 'full';
 }
 
 /** brand_logos */

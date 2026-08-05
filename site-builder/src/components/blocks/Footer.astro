@@ -107,11 +107,22 @@ const telHref = contact?.phone ? `tel:${contact.phone.replace(/[^+\d]/g, '')}` :
     padding-bottom: 56px;
   }
 
+  /*
+   * Deliberately tighter than a content section.
+   *
+   * It was running the full --dbm-section-y top and bottom with an xl gap, so
+   * four short link lists produced a footer as tall as a page of content. A
+   * footer is a reference block, not a section — it should be scannable at a
+   * glance rather than scrolled through.
+   *
+   * minmax(180px) over 220px so four columns hold on a laptop instead of
+   * wrapping to two rows of stretched, mostly-empty columns.
+   */
   .footer__inner {
     display: grid;
-    gap: var(--dbm-space-xl);
-    padding-block: var(--dbm-section-y);
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--dbm-space-lg);
+    padding-block: clamp(2rem, 4vw, 3rem);
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 
   .footer__col--brand {
@@ -126,7 +137,7 @@ const telHref = contact?.phone ? `tel:${contact.phone.replace(/[^+\d]/g, '')}` :
   }
 
   .footer__tagline {
-    margin: 0 0 var(--dbm-space-md);
+    margin: 0 0 var(--dbm-space-sm);
     opacity: 0.75;
     font-size: var(--dbm-text-sm);
   }
@@ -139,6 +150,8 @@ const telHref = contact?.phone ? `tel:${contact.phone.replace(/[^+\d]/g, '')}` :
     background: var(--dbm-color-background);
     border-radius: var(--dbm-radius-sm);
     padding: 6px;
+    /* Capped: at full width the QR alone set the height of the whole row. */
+    max-width: 132px;
   }
 
   .footer__qr figcaption {
@@ -153,7 +166,7 @@ const telHref = contact?.phone ? `tel:${contact.phone.replace(/[^+\d]/g, '')}` :
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin: 0 0 var(--dbm-space-md);
+    margin: 0 0 var(--dbm-space-sm);
     padding-bottom: var(--dbm-space-xs);
     border-bottom: 2px solid var(--dbm-color-primary);
     display: inline-block;
@@ -194,7 +207,7 @@ const telHref = contact?.phone ? `tel:${contact.phone.replace(/[^+\d]/g, '')}` :
 
   .footer__bar {
     border-top: 1px solid rgb(255 255 255 / 0.12);
-    padding-block: var(--dbm-space-md);
+    padding-block: var(--dbm-space-sm);
   }
 
   .footer__copyright {
