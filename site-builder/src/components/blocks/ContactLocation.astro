@@ -7,6 +7,29 @@ const { heading, intro, address, phone, email, hours, mapEmbedUrl, cta } = Astro
 
 const telHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : undefined;
 
+/*
+ * Google only renders its own embed URLs in an iframe. Everything else it
+ * refuses to frame, and the refusal is silent — the iframe simply stays
+ * blank, which looks like a broken site rather than a wrong setting.
+ *
+ * What people actually paste is the Share link (maps.app.goo.gl/...) or the
+ * address-bar URL, because that is what Google's own Share button gives you.
+ * A short link cannot be resolved here, so rather than framing something that
+ * will not load, fall back to a query embed built from the address — which
+ * needs no API key — and failing that, offer a plain link out.
+ */
+const rawMap = mapEmbedUrl?.trim();
+const isEmbeddable = Boolean(rawMap && /\/maps\/embed|output=embed/.test(rawMap));
+
+const mapSrc = isEmbeddable
+  ? rawMap
+  : address
+    ? `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`
+    : undefined;
+
+// A link that was given but cannot be framed still deserves to be reachable.
+const mapLink = !isEmbeddable && rawMap ? rawMap : undefined;
+
 // `hours` is free text in Supabase, but the admin tool may later store a
 // structured table. Support both.
 const hoursText = typeof hours === 'string' ? hours.trim() : undefined;
@@ -75,15 +98,21 @@ const cards = [
 
   {/* Full-bleed, the way the reference runs its map — a boxed map reads as a
       screenshot, a full-width one reads as "here we are". */}
-  {mapEmbedUrl && (
+  {mapSrc && (
     <div class="contact__map">
       <iframe
-        src={mapEmbedUrl}
+        src={mapSrc}
         title={`Map showing the location of ${heading}`}
         loading="lazy"
         referrerpolicy="no-referrer-when-downgrade"
       ></iframe>
     </div>
+  )}
+
+  {mapLink && (
+    <p class="contact__maplink">
+      <a href={mapLink} target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
+    </p>
   )}
 </section>
 
@@ -237,6 +266,79 @@ const cards = [
     width: 100%;
     height: 400px;
     border: 0;
+  }
+
+  .contact__maplink {
+    text-align: center;
+    margin: var(--dbm-space-md) 0 0;
+  }
+
+  .contact__maplink a {
+    color: var(--dbm-color-primary);
+  }
+
+  /*
+   * The sweep from the Vision/Mission cards, so the contact page moves the
+   * same way the about page does.
+   */
+  .contact__card {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .contact__card::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    height: 100%;
+    z-index: 0;
+    background: var(--dbm-color-primary);
+    border-radius: 500px 500px 0 0;
+    opacity: 0;
+    transition: top 0.4s ease-in-out, border-radius 0.4s ease-in-out, opacity 0.4s ease-in-out;
+  }
+
+  .contact__card:hover::before,
+  .contact__card:focus-within::before {
+    top: 0;
+    border-radius: 0;
+    opacity: 1;
+  }
+
+  /* Above the rising panel, which is a positioned descendant and would
+     otherwise paint over the text it is meant to sit behind. */
+  .contact__card > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .contact__card :is(.contact__card-title, .contact__card-body) {
+    transition: color 0.4s ease-in-out;
+  }
+
+  .contact__card:is(:hover, :focus-within)
+    :is(.contact__card-title, .contact__card-body) {
+    color: var(--dbm-color-primary-contrast);
+  }
+
+  /* The icon already carries the primary fill; on the panel it would vanish
+     into it, so it inverts. */
+  .contact__card:is(:hover, :focus-within) .contact__icon {
+    background: var(--dbm-color-primary-contrast);
+    color: var(--dbm-color-primary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contact__card::before,
+    .contact__card :is(.contact__card-title, .contact__card-body) {
+      transition: none;
+    }
+
+    .contact__card::before {
+      border-radius: 0;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

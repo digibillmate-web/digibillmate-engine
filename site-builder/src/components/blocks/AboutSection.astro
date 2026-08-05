@@ -7,8 +7,25 @@ const { heading, body, image, readMore } = Astro.props;
 
 // Blank lines in the stored text become paragraphs.
 const paragraphs = body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+
+/*
+ * An image with no heading and no copy is not an about section — it is the
+ * full-width highlight band the reference runs above its footer. Rendered as
+ * one, because the alternative is a boxed thumbnail beside an empty text
+ * column, which is what it looks like today.
+ *
+ * Inferred rather than configured: there is nothing else this combination
+ * could sensibly mean, and a setting would be one more thing to discover
+ * before the block does anything useful.
+ */
+const isBand = Boolean(image) && !heading?.trim() && paragraphs.length === 0;
 ---
 
+{isBand ? (
+  <section class="aboutband" id="about" aria-label={image!.alt || 'Highlight'}>
+    <img src={image!.src} alt={image!.alt} loading="lazy" />
+  </section>
+) : (
 <section class="about dbm-section" id="about">
   <div class="dbm-container about__inner" class:list={[{ 'about__inner--split': image }]}>
     {image && (
@@ -28,8 +45,27 @@ const paragraphs = body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
     </div>
   </div>
 </section>
+)}
 
 <style>
+  /*
+   * Full-bleed highlight band. No container and no section padding: it spans
+   * the viewport edge to edge, the way the reference's strip above the footer
+   * does. A fixed height with object-fit crops rather than letting a tall
+   * image take over the page.
+   */
+  .aboutband {
+    display: block;
+    width: 100%;
+  }
+
+  .aboutband img {
+    display: block;
+    width: 100%;
+    height: clamp(180px, 26vw, 320px);
+    object-fit: cover;
+  }
+
   .about__inner--split {
     display: grid;
     gap: var(--dbm-space-xl);
