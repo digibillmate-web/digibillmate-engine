@@ -63,6 +63,50 @@ const themeStyle = theme
        *    that section would otherwise never appear again.
        */
       const root = document.documentElement;
+
+      /**
+       * Splits section headings into per-character spans so they can slide in
+       * one letter at a time, the way the reference site does.
+       *
+       * Done in script rather than in the markup because a heading is author
+       * content: the components emit a plain string and this is presentation.
+       *
+       * Accessibility: a heading read out character by character is worse than
+       * no animation at all, so the original text is set as the accessible
+       * name and every generated span is hidden from assistive tech.
+       */
+      for (const heading of document.querySelectorAll<HTMLElement>('.dbm-heading')) {
+        const text = heading.textContent?.trim();
+        // Only plain-text headings; anything with markup inside is left alone
+        // rather than having its elements flattened away.
+        if (!text || heading.children.length > 0) continue;
+
+        heading.setAttribute('aria-label', text);
+
+        const frag = document.createDocumentFragment();
+        let index = 0;
+
+        text.split(/(\s+)/).forEach((chunk) => {
+          if (/^\s+$/.test(chunk)) {
+            frag.append(document.createTextNode(' '));
+            return;
+          }
+          const word = document.createElement('span');
+          word.className = 'word';
+          word.setAttribute('aria-hidden', 'true');
+          for (const character of Array.from(chunk)) {
+            const span = document.createElement('span');
+            span.className = 'char';
+            span.style.setProperty('--char-i', String(index++));
+            span.textContent = character;
+            word.append(span);
+          }
+          frag.append(word);
+        });
+
+        heading.replaceChildren(frag);
+      }
+
       const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'));
 
       if (targets.length > 0) {

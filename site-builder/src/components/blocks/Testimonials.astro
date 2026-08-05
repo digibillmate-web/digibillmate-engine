@@ -13,7 +13,7 @@ const { heading, intro, items } = Astro.props;
     {intro && <p class="dbm-intro">{intro}</p>}
     <CardRail label="Testimonials" autoplay>
       {items.map((item) => (
-        <li class="testimonials__card">
+        <li class="testimonials__card dbm-surface">
           {typeof item.rating === 'number' && (
             <p class="testimonials__rating" aria-label={`${item.rating} out of 5`}>
               <span aria-hidden="true">{'★'.repeat(Math.max(0, Math.min(5, Math.round(item.rating))))}</span>

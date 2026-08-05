@@ -29,7 +29,7 @@ const iconFor = (slug?: string) => (slug && ICONS[slug]) || '◆';
     {heading && <h2 class="dbm-heading why__heading">{heading}</h2>}
     <ul class="why__grid" data-stagger>
       {reasons.map((reason) => (
-        <li class="why__card">
+        <li class="why__card dbm-surface">
           <span class="why__icon" aria-hidden="true">{iconFor(reason.icon)}</span>
           <h3 class="why__title">{reason.title}</h3>
           {reason.description && <p class="why__desc">{reason.description}</p>}

@@ -14,6 +14,7 @@ export interface FontOption {
 }
 
 export const FONT_OPTIONS: FontOption[] = [
+  { value: '"Plus Jakarta Sans", sans-serif', label: 'Plus Jakarta Sans', group: 'Sans' },
   { value: 'Inter, sans-serif', label: 'Inter', group: 'Sans' },
   { value: 'Poppins, sans-serif', label: 'Poppins', group: 'Sans' },
   { value: 'Montserrat, sans-serif', label: 'Montserrat', group: 'Sans' },

@@ -44,21 +44,13 @@ const paragraphs = body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
     object-fit: cover;
   }
 
+  /*
+   * The about heading is the one that sits beside body copy rather than
+   * over a centred section, and the reference left-aligns it there. No
+   * accent rule: measured off the reference, which uses weight alone.
+   */
   .about__heading {
-    position: relative;
-    padding-bottom: var(--dbm-space-sm);
-  }
-
-  /* Short accent rule under the heading, matching the footer treatment. */
-  .about__heading::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 56px;
-    height: 3px;
-    background: var(--dbm-color-primary);
-    border-radius: 2px;
+    text-align: start;
   }
 
   .about__text {

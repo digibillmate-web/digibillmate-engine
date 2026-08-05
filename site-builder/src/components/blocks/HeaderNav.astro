@@ -67,50 +67,29 @@ const brandHref = navLinks?.find((link) => link.href === '/') ? '/' : '#top';
 
 <style>
   /*
-   * Pinned to the top for the whole page. On these sites the phone number and
-   * the CTA live in the header, so letting it scroll away puts the two things
-   * a visitor is most likely to want behind a full scroll back up.
-   *
-   * Below the floating contact bar in the stack, which is a fixed rail and
-   * must stay clear of the header shadow.
+   * Scrolls away with the page, which is what the reference does — measured,
+   * not assumed. A pinned header is arguably the better behaviour here, since
+   * the phone number and CTA live inside it, but matching the reference is
+   * the goal and pinning was a visible deviation from it.
    */
   .header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
+    position: static;
     background: var(--dbm-color-background);
     border-bottom: 1px solid var(--dbm-color-border);
     box-shadow: var(--dbm-shadow-sm);
-    transition: box-shadow 0.25s ease;
-  }
-
-  /* Lifts off the page once it is genuinely overlapping content. */
-  .header.is-stuck {
-    box-shadow: var(--dbm-shadow-md);
   }
 
   .header__inner {
     display: flex;
     align-items: center;
     gap: var(--dbm-space-md);
-    min-height: 72px;
+    /* The reference runs a tall header built around a large logo. */
+    min-height: 96px;
     flex-wrap: wrap;
-    transition: min-height 0.25s ease;
   }
 
-  /* Gives back vertical space once scrolling starts, so the pinned bar costs
-     less of the viewport than it does at rest. */
-  .header.is-stuck .header__inner {
-    min-height: 60px;
-  }
-
-  .header__logo,
-  .header.is-stuck .header__logo {
-    transition: height 0.25s ease;
-  }
-
-  .header.is-stuck .header__logo {
-    height: 34px;
+  .header__logo {
+    height: 64px;
   }
 
   .header__brand {
@@ -122,7 +101,6 @@ const brandHref = navLinks?.find((link) => link.href === '/') ? '/' : '#top';
   }
 
   .header__logo {
-    height: 40px;
     width: auto;
   }
 
@@ -311,20 +289,8 @@ const brandHref = navLinks?.find((link) => link.href === '/') ? '/' : '#top';
     }
   }
 
-  /* An open menu on a pinned header can outgrow the viewport, so the panel
-     scrolls rather than pushing its own links off-screen. */
-  @media (max-width: 900px) {
-    .header__inner.is-open .header__nav {
-      max-height: calc(100vh - 140px);
-      overflow-y: auto;
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .header__bars span,
-    .header,
-    .header__inner,
-    .header__logo {
+    .header__bars span {
       transition: none;
     }
   }
@@ -336,29 +302,6 @@ const brandHref = navLinks?.find((link) => link.href === '/') ? '/' : '#top';
    * does nothing and the nav stays collapsed, so the phone number and CTA in
    * the header remain the way to make contact.
    */
-  /**
-   * Marks the header once the page has scrolled, which drives the shrink and
-   * the deeper shadow. Read in a rAF so a fast scroll cannot queue a layout
-   * read per event.
-   */
-  document.querySelectorAll<HTMLElement>('.header').forEach((header) => {
-    let queued = false;
-    const sync = () => {
-      queued = false;
-      header.classList.toggle('is-stuck', window.scrollY > 8);
-    };
-    window.addEventListener(
-      'scroll',
-      () => {
-        if (queued) return;
-        queued = true;
-        requestAnimationFrame(sync);
-      },
-      { passive: true },
-    );
-    sync();
-  });
-
   document.querySelectorAll<HTMLElement>('.header__inner').forEach((inner) => {
     const toggle = inner.querySelector<HTMLButtonElement>('.header__toggle');
     const nav = inner.querySelector<HTMLElement>('.header__nav');

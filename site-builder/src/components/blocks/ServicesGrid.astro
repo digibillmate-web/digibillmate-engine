@@ -22,7 +22,7 @@ function formatPrice(price: string | number): string {
     {intro && <p class="dbm-intro">{intro}</p>}
     <CardRail label="Services" autoplay>
       {services.map((service) => (
-        <li class="services__card">
+        <li class="services__card dbm-surface">
           {service.image ? (
             <div class="services__media">
               <img src={service.image.src} alt={service.image.alt || service.title} loading="lazy" />
