@@ -6,12 +6,24 @@ type Props = PageBannerContent;
 const { title, subtitle, image, breadcrumb, showBreadcrumb = true } = Astro.props;
 
 /*
- * A heavy scrim, deliberately. These sites reuse promotional artwork that
- * already carries its own headline text, so a light overlay leaves two sets
- * of words competing. Better a flatter photo than an unreadable title.
+ * A graded scrim rather than a flat one.
+ *
+ * A single opacity has to serve two goals at once and fails both: dark enough
+ * to carry a title over a busy photo leaves the photo looking switched off,
+ * and light enough to show the photo leaves the title fighting it.
+ *
+ * Darkest through the middle band where the title and breadcrumb sit, easing
+ * off top and bottom so the image is still visibly a photograph.
  */
+const SCRIM = [
+  'rgb(0 0 0 / 0.30) 0%',
+  'rgb(0 0 0 / 0.62) 35%',
+  'rgb(0 0 0 / 0.62) 65%',
+  'rgb(0 0 0 / 0.30) 100%',
+].join(', ');
+
 const style = image
-  ? `background-image: linear-gradient(rgb(0 0 0 / 0.72), rgb(0 0 0 / 0.72)), url('${image.src}')`
+  ? `background-image: linear-gradient(${SCRIM}), url('${image.src}')`
   : undefined;
 ---
 

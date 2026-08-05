@@ -94,6 +94,7 @@ const CONTENT_MAPPERS = {
       facebook: channel(c.facebook),
       instagram: channel(c.instagram),
       youtube: channel(c.youtube),
+      ...(Array.isArray(c.order) && c.order.length > 0 ? { order: c.order } : {}),
     };
   },
 

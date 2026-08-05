@@ -48,6 +48,8 @@ export interface FloatingContactBarContent {
   facebook?: ContactChannel;
   instagram?: ContactChannel;
   youtube?: ContactChannel;
+  /** Top-to-bottom order. Anything omitted follows, in the default order. */
+  order?: string[];
 }
 
 /** footer */

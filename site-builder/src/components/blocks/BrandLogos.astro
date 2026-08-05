@@ -51,18 +51,27 @@ const { heading, brands } = Astro.props;
     min-height: 88px;
   }
 
+  /*
+   * Full colour. Desaturating these reads as "logos we could not load"
+   * rather than as a deliberate treatment, and the marques are the point of
+   * the strip — a customer is scanning it for their own car's badge.
+   */
   .brands__logo {
     max-height: 48px;
     width: auto;
-    /* Desaturated by default so the strip reads as one unit, not a rainbow. */
-    filter: grayscale(1);
-    opacity: 0.7;
-    transition: filter 0.2s ease, opacity 0.2s ease;
+    transition: transform 0.2s ease;
   }
 
   .brands__item:hover .brands__logo {
-    filter: grayscale(0);
-    opacity: 1;
+    transform: scale(1.06);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .brands__logo,
+    .brands__item:hover .brands__logo {
+      transition: none;
+      transform: none;
+    }
   }
 
   .brands__name {

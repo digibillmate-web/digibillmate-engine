@@ -3,7 +3,7 @@ import type { FloatingContactBarContent } from '../../types/blocks';
 
 type Props = FloatingContactBarContent;
 
-const { call, whatsapp, facebook, instagram, youtube } = Astro.props;
+const { call, whatsapp, facebook, instagram, youtube, order } = Astro.props;
 
 /**
  * Circular brand buttons stacked down the right edge, matching the pattern
@@ -14,20 +14,37 @@ const { call, whatsapp, facebook, instagram, youtube } = Astro.props;
  * SVG marks are inlined rather than loaded from an icon CDN, so the built
  * site stays a self-contained artifact with no external request.
  */
-const channels = [
-  { key: 'youtube', color: '#ff0000', channel: youtube },
+const CHANNELS = {
+  call: { color: '#4caf50', channel: call },
+  whatsapp: { color: '#25d366', channel: whatsapp },
   // Instagram's mark is a gradient, not a flat magenta. A solid fill is the
   // single most obvious tell that these are stand-in icons.
-  {
-    key: 'instagram',
+  instagram: {
     color:
       'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)',
     channel: instagram,
   },
-  { key: 'facebook', color: '#1877f2', channel: facebook },
-  { key: 'whatsapp', color: '#25d366', channel: whatsapp },
-  { key: 'call', color: '#4caf50', channel: call },
-].filter((entry) => entry.channel?.url);
+  facebook: { color: '#1877f2', channel: facebook },
+  youtube: { color: '#ff0000', channel: youtube },
+};
+
+/**
+ * Reading order down the rail. Contact channels first, because someone
+ * reaching for this rail usually wants to talk to the business rather than
+ * follow it; social profiles sit below.
+ *
+ * An operator can reorder it. Anything they leave out still renders, after
+ * the ones they listed — dropping a key from the list is how you would
+ * reorder in a hurry, and it should not silently delete a contact channel.
+ */
+const DEFAULT_ORDER = ['call', 'whatsapp', 'instagram', 'facebook', 'youtube'];
+
+const requested = (order ?? []).filter((key): key is keyof typeof CHANNELS => key in CHANNELS);
+const sequence = [...requested, ...DEFAULT_ORDER.filter((key) => !requested.includes(key as never))];
+
+const channels = sequence
+  .map((key) => ({ key, ...CHANNELS[key as keyof typeof CHANNELS] }))
+  .filter((entry) => entry.channel?.url);
 ---
 
 {
