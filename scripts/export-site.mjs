@@ -92,8 +92,17 @@ function toCssVars(theme) {
 const mapUrlCache = new Map();
 
 async function resolveMapUrl(raw) {
-  const url = raw?.trim();
+  let url = raw?.trim();
   if (!url) return undefined;
+
+  /*
+   * Google's "Embed a map" tab hands over a whole <iframe> element, not a
+   * URL, so that is what lands in the field. Take the src rather than
+   * rejecting it — the alternative is telling someone their correct answer
+   * is wrong because of the wrapper it arrived in.
+   */
+  const iframeSrc = url.match(/<iframe[^>]*\ssrc=["']([^"']+)["']/i);
+  if (iframeSrc) url = iframeSrc[1];
 
   // Already embeddable — leave it alone.
   if (/\/maps\/embed|output=embed/.test(url)) return url;
