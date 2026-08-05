@@ -42,7 +42,9 @@ const style = image
   .pagebanner {
     background: var(--dbm-color-secondary);
     color: var(--dbm-color-secondary-contrast);
-    padding-block: clamp(2.5rem, 7vw, 4.5rem);
+    /* The reference runs 140px top and bottom, giving the banner enough
+       presence to read as a page header rather than a coloured strip. */
+    padding-block: clamp(3.5rem, 11vw, 8.75rem);
     background-size: cover;
     background-position: center;
     text-align: center;

@@ -162,12 +162,21 @@ export interface Service {
   price?: string | number;
 }
 
+/**
+ * 'rail' is the scrolling row of cards used as a summary; 'detail' is the
+ * full-width alternating image/text stack a services page is made of. Same
+ * services either way — one list of services, two presentations of it.
+ */
+export type ServicesLayout = 'rail' | 'detail';
+
 export interface ServicesGridContent {
   heading: string;
   intro?: string;
   services: Service[];
   /** Currency symbol prepended to service prices. Defaults to ₹. */
   currency?: string;
+  /** Defaults to 'rail'. */
+  layout?: ServicesLayout;
 }
 
 /** pricing_offers */

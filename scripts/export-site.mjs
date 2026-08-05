@@ -177,6 +177,7 @@ const CONTENT_MAPPERS = {
 
   services_grid: (c) => ({
     heading: c.title,
+    ...(c.layout === 'detail' ? { layout: 'detail' } : {}),
     services: (c.services ?? []).map((s) => ({
       title: s.name,
       description: s.description,

@@ -8,7 +8,7 @@
  * Image fields render an upload control at checkpoint D; for now they are a
  * URL box with a live thumbnail.
  */
-import type { Field } from '@/lib/schema-to-fields';
+import { humanize, type Field } from '@/lib/schema-to-fields';
 import ImageField from '@/components/fields/ImageField';
 
 /** A blank value matching a field's kind, for newly added array items. */
@@ -209,6 +209,35 @@ export default function FieldInput({
           uploadPrefix={uploadPrefix}
           onChange={onChange}
         />
+      </div>
+    );
+  }
+
+  // --- select -------------------------------------------------------------
+  if (field.kind === 'select' && field.options?.length) {
+    const current = typeof value === 'string' ? value : '';
+
+    return (
+      <div className="ef">
+        {label}
+        <select
+          id={id}
+          className="ef__input"
+          value={current}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          {/* A value outside the schema's list would otherwise vanish from
+              the picker and be silently rewritten on the next save. */}
+          {!field.required && <option value="">Default</option>}
+          {current && !field.options.includes(current) && (
+            <option value={current}>{current} (not a valid option)</option>
+          )}
+          {field.options.map((option) => (
+            <option key={option} value={option}>
+              {humanize(option)}
+            </option>
+          ))}
+        </select>
       </div>
     );
   }

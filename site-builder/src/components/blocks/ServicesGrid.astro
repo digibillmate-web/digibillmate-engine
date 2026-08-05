@@ -1,10 +1,11 @@
 ---
 import type { ServicesGridContent } from '../../types/blocks';
 import CardRail from '../CardRail.astro';
+import { serviceAnchor } from '../../lib/service-anchor';
 
 type Props = ServicesGridContent;
 
-const { heading, intro, services, currency = '₹' } = Astro.props;
+const { heading, intro, services, currency = '₹', layout = 'rail' } = Astro.props;
 
 /**
  * Stored prices are plain amounts ("2,499"); the symbol is presentation.
@@ -20,6 +21,41 @@ function formatPrice(price: string | number): string {
   <div class="dbm-container">
     <h2 class="dbm-heading">{heading}</h2>
     {intro && <p class="dbm-intro">{intro}</p>}
+
+    {layout === 'detail' ? (
+      <div class="services__details">
+        {services.map((service, index) => (
+          <article
+            class="services__detail"
+            class:list={[{ 'services__detail--flipped': index % 2 === 1 }]}
+            id={serviceAnchor(service.title) || undefined}
+          >
+            {service.image && (
+              <div class="services__detail-media">
+                <img
+                  src={service.image.src}
+                  alt={service.image.alt || service.title}
+                  loading="lazy"
+                />
+              </div>
+            )}
+
+            <div class="services__detail-body">
+              <h3 class="services__detail-title">{service.title}</h3>
+              {service.description && (
+                <p class="services__detail-desc">{service.description}</p>
+              )}
+              {service.price !== undefined && service.price !== '' && (
+                <p class="services__price">
+                  <span class="services__price-label">From</span>
+                  <span class="services__price-amount">{formatPrice(service.price)}</span>
+                </p>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    ) : (
     <CardRail label="Services" autoplay>
       {services.map((service) => (
         <li class="services__card dbm-surface">
@@ -48,6 +84,7 @@ function formatPrice(price: string | number): string {
         </li>
       ))}
     </CardRail>
+    )}
   </div>
 </section>
 
@@ -130,6 +167,64 @@ function formatPrice(price: string | number): string {
     font-size: var(--dbm-text-lg);
     font-weight: 700;
     color: var(--dbm-color-primary);
+  }
+
+  /*
+   * Detail layout: one full-width row per service, image and copy side by
+   * side, sides swapping down the page. The alternation is what stops a long
+   * stack of services reading as a single undifferentiated column.
+   */
+  .services__details {
+    display: grid;
+    gap: var(--dbm-section-y);
+  }
+
+  .services__detail {
+    display: grid;
+    gap: var(--dbm-space-lg);
+    align-items: center;
+    /* Clears the sticky-free header by a comfortable margin when arrived at
+       from a link on another page. */
+    scroll-margin-top: var(--dbm-space-lg);
+  }
+
+  .services__detail-media img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--dbm-radius-lg);
+  }
+
+  .services__detail-title {
+    font-family: var(--dbm-font-heading);
+    font-size: var(--dbm-text-xl);
+    font-weight: 700;
+    margin: 0 0 var(--dbm-space-sm);
+  }
+
+  .services__detail-desc {
+    margin: 0 0 var(--dbm-space-md);
+    color: var(--dbm-color-text-muted);
+    max-width: 52ch;
+  }
+
+  .services__detail .services__price {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  @media (min-width: 768px) {
+    .services__detail {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--dbm-space-xl);
+    }
+
+    /* Media moves to column two on alternate rows. Ordering rather than
+       reordering the markup keeps the heading before its image for a screen
+       reader on every row. */
+    .services__detail--flipped .services__detail-media {
+      order: 2;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

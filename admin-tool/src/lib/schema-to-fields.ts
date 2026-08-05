@@ -33,6 +33,7 @@ export type FieldKind =
   | 'image'
   | 'number'
   | 'boolean'
+  | 'select'
   | 'object'
   | 'array'
   | 'unknown';
@@ -49,6 +50,8 @@ export interface Field {
   fields?: Field[];
   /** For kind === 'array' — the shape of one item. */
   item?: Field;
+  /** For kind === 'select' — the only values the schema allows. */
+  options?: string[];
 }
 
 export function isImageField(name: string): boolean {
@@ -67,6 +70,8 @@ interface JsonSchema {
   properties?: Record<string, JsonSchema>;
   required?: string[];
   items?: JsonSchema;
+  /** A closed set of allowed values, rendered as a picker rather than a box. */
+  enum?: string[];
 }
 
 function kindFor(name: string, schema: JsonSchema): FieldKind {
@@ -81,6 +86,9 @@ function kindFor(name: string, schema: JsonSchema): FieldKind {
     case 'boolean':
       return 'boolean';
     case 'string':
+      // A closed set is a choice, and a text box for it invites a typo that
+      // saves cleanly and then renders nothing.
+      if (Array.isArray(schema.enum) && schema.enum.length > 0) return 'select';
       if (isImageField(name)) return 'image';
       if (LONG_TEXT_NAMES.has(name)) return 'textarea';
       return 'string';
@@ -103,6 +111,10 @@ function buildField(name: string, schema: JsonSchema, path: string, required: bo
     kind,
     required,
   };
+
+  if (kind === 'select' && schema.enum) {
+    field.options = schema.enum;
+  }
 
   if (kind === 'object' && schema.properties) {
     field.fields = fieldsFromProperties(schema, path);

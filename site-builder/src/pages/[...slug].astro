@@ -10,6 +10,7 @@ import SiteLayout from '../layouts/SiteLayout.astro';
 import BlockRenderer from '../components/BlockRenderer.astro';
 import type { ExportedSite, ExportedPage } from '../types/site';
 import type { BlockContent } from '../types/blocks';
+import { serviceAnchor } from '../lib/service-anchor';
 
 /**
  * Blocks that belong to the whole site rather than to one page.
@@ -30,7 +31,11 @@ function pick(types: string[], page: ExportedPage) {
   return page.blocks.filter((block) => types.includes(block.type));
 }
 
-function composePage(page: ExportedPage, home: ExportedPage): BlockContent[] {
+function composePage(
+  page: ExportedPage,
+  home: ExportedPage,
+  detailServicesHref?: string,
+): BlockContent[] {
   const ownBefore = pick(CHROME_BEFORE, page);
   const ownAfter = pick(CHROME_AFTER, page);
 
@@ -40,7 +45,58 @@ function composePage(page: ExportedPage, home: ExportedPage): BlockContent[] {
     ...(ownAfter.length > 0 ? ownAfter : pick(CHROME_AFTER, home)),
   ];
 
-  return blocks.map((block) => fillPageBanner(markCurrentNav(block, page), page));
+  return blocks.map((block) =>
+    linkServicesToDetail(
+      fillPageBanner(markCurrentNav(block, page), page),
+      detailServicesHref,
+    ),
+  );
+}
+
+/**
+ * The page whose services_grid uses the detail layout, if any. That page is
+ * where a summary card should send someone who wants to read more.
+ */
+function findDetailServicesHref(pages: ExportedPage[]): string | undefined {
+  const match = pages.find((candidate) =>
+    candidate.blocks.some(
+      (block) => block.type === 'services_grid' && block.content.layout === 'detail',
+    ),
+  );
+
+  if (!match) return undefined;
+  return match.slug ? `/${match.slug}/` : '/';
+}
+
+/**
+ * Points each summary service card at its section on the services page.
+ *
+ * Done at render time because it needs the whole site: which page carries the
+ * detail layout is not knowable from inside a block. Doing it here also means
+ * the link survives renaming or moving that page, where a stored href would
+ * quietly rot.
+ *
+ * An explicit href on a service still wins — a site may point a service at an
+ * external booking page, and this only fills the gap.
+ */
+function linkServicesToDetail(
+  block: BlockContent,
+  detailServicesHref?: string,
+): BlockContent {
+  if (block.type !== 'services_grid' || block.content.layout === 'detail') return block;
+  if (!detailServicesHref) return block;
+
+  return {
+    ...block,
+    content: {
+      ...block.content,
+      services: block.content.services.map((service) => {
+        if (service.href) return service;
+        const anchor = serviceAnchor(service.title);
+        return anchor ? { ...service, href: `${detailServicesHref}#${anchor}` } : service;
+      }),
+    },
+  };
 }
 
 /**
@@ -163,7 +219,7 @@ const title = page.slug === '' ? brand : `${page.title} — ${brand}`;
 
 const description = site.theme['--dbm-seo-description']?.trim() || undefined;
 
-const blocks = composePage(page, home);
+const blocks = composePage(page, home, findDetailServicesHref(site.pages));
 ---
 
 <SiteLayout
