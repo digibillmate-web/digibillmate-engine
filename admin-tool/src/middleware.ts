@@ -36,7 +36,19 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isLogin = pathname.startsWith('/login');
 
-  if (!user && !isLogin) {
+  /*
+   * Enquiry intake is public by design: it is posted to by visitors on client
+   * sites, who have no account here and never will. Redirecting it to /login
+   * turned every submission into a 307 towards a sign-in page.
+   *
+   * Exempted here rather than narrowing the matcher, so the default stays
+   * "everything is gated" and each public route has to say so explicitly.
+   * The route does its own checking — known site id, honeypot, rate limit,
+   * origin — and writes nothing else.
+   */
+  const isPublicApi = pathname === '/api/enquiry';
+
+  if (!user && !isLogin && !isPublicApi) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', pathname);
