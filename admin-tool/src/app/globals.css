@@ -1469,3 +1469,80 @@ textarea.ef__input {
   font-weight: 500;
   color: var(--admin-text-muted);
 }
+
+/* --- Industries & templates --------------------------------------------- */
+
+.industry {
+  margin-bottom: 2rem;
+}
+
+.industry__name {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--admin-text-muted);
+}
+
+.industry__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.tmpl {
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.tmpl__name {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.tmpl__key {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+.tmpl__desc {
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
+  color: var(--admin-text-muted);
+}
+
+.tmpl__stats {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0.9rem 0 0;
+}
+
+.tmpl__stats dt {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-muted);
+}
+
+.tmpl__stats dd {
+  margin: 0.1rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* Pinned to the bottom so cards of different heights line their buttons up. */
+.tmpl__action {
+  margin-top: auto;
+  padding-top: 1rem;
+  align-self: start;
+}
+
+.templates__note {
+  margin-top: 1.5rem;
+}
+
+.empty {
+  padding: 1.25rem;
+  color: var(--admin-text-muted);
+}

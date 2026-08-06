@@ -9,7 +9,7 @@ import SignOutButton from '@/components/SignOutButton';
 export default async function AppHeader({
   current,
 }: {
-  current?: 'dashboard' | 'sites' | 'clients';
+  current?: 'dashboard' | 'sites' | 'templates' | 'clients';
 }) {
   const supabase = await createClient();
   const {
@@ -32,6 +32,12 @@ export default async function AppHeader({
           </Link>
           <Link className={`app-nav__link ${current === 'sites' ? 'is-current' : ''}`} href="/sites">
             Sites
+          </Link>
+          <Link
+            className={`app-nav__link ${current === 'templates' ? 'is-current' : ''}`}
+            href="/templates"
+          >
+            Templates
           </Link>
           <Link
             className={`app-nav__link ${current === 'clients' ? 'is-current' : ''}`}
