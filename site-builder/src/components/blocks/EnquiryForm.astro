@@ -14,10 +14,16 @@ const {
 } = Astro.props;
 
 /**
- * The built site is static, so there is nothing to POST to. The form composes
- * the enquiry and hands it to the visitor's own WhatsApp or mail client, which
- * is how this category of business actually takes enquiries — and it cannot be
- * abused as an open relay, because nothing is sent server-side.
+ * Two ways to make contact, because the visitors differ.
+ *
+ * WhatsApp is how this category of business actually takes enquiries, and it
+ * stays the primary action. But it is rarely installed on a desktop, so on a
+ * PC the only visible button appeared to do nothing — and email was recorded
+ * silently in the background where nobody knew to look for it.
+ *
+ * Email now posts to the platform's intake endpoint and reports back. Where
+ * no endpoint is configured it falls back to the visitor's own mail client,
+ * so the button always does something honest.
  */
 const digits = whatsappNumber ? whatsappNumber.replace(/[^\d]/g, '') : '';
 const hasWhatsapp = digits.length > 0;
@@ -93,12 +99,42 @@ const canSend = hasWhatsapp || hasEmail;
           <input id="enq-website" name="website" type="text" tabindex="-1" autocomplete="off" />
         </div>
 
+        {/*
+          Two routes, two buttons.
+
+          One button doing both was a desktop trap: WhatsApp is not installed
+          on most PCs, so the only visible way to make contact appeared to be
+          broken and nobody knew an email option existed at all.
+
+          WhatsApp stays the primary action because that is how these
+          customers actually make contact, but it is now honestly labelled as
+          what it does.
+        */}
         <div class="enquiry__actions">
-          <button class="dbm-btn dbm-btn--primary" type="submit">{submitLabel}</button>
-          <span class="enquiry__route">
-            {hasWhatsapp ? 'Opens WhatsApp with your details filled in' : 'Opens your email app'}
-          </span>
+          {hasWhatsapp && (
+            <button class="dbm-btn dbm-btn--primary" type="submit" data-route="whatsapp">
+              {submitLabel}
+            </button>
+          )}
+
+          <button
+            class:list={['dbm-btn', hasWhatsapp ? 'dbm-btn--secondary' : 'dbm-btn--primary']}
+            type="submit"
+            data-route="email"
+          >
+            Send by email
+          </button>
         </div>
+
+        <p class="enquiry__route">
+          {hasWhatsapp
+            ? 'WhatsApp opens the app with your details filled in. Email sends it to us directly — no app needed.'
+            : 'Sends your enquiry to us directly.'}
+        </p>
+
+        {/* Announced, not just shown: someone using a screen reader needs to
+            know the enquiry landed without hunting for the sentence. */}
+        <p class="enquiry__status" data-enquiry-status role="status" aria-live="polite"></p>
 
         {footnote && <p class="enquiry__footnote">{footnote}</p>}
       </form>
@@ -188,6 +224,25 @@ const canSend = hasWhatsapp || hasEmail;
     margin: var(--dbm-space-sm) 0 0;
   }
 
+  /* Empty until something happens, so it takes no space on a fresh form. */
+  .enquiry__status:empty {
+    display: none;
+  }
+
+  .enquiry__status {
+    margin: var(--dbm-space-sm) 0 0;
+    font-weight: 600;
+    font-size: var(--dbm-text-sm);
+  }
+
+  .enquiry__status[data-kind='ok'] {
+    color: #1a7f3c;
+  }
+
+  .enquiry__status[data-kind='error'] {
+    color: #b3261e;
+  }
+
   .enquiry__unconfigured {
     color: var(--dbm-color-text-muted);
     font-style: italic;
@@ -253,67 +308,122 @@ const canSend = hasWhatsapp || hasEmail;
   document.querySelectorAll<HTMLFormElement>('form[data-enquiry]').forEach((form) => {
     prefillService(form);
 
-    form.addEventListener('submit', (event) => {
+    const status = form.querySelector<HTMLElement>('[data-enquiry-status]');
+
+    /** Which button was pressed; submitter is unset for Enter-key submits. */
+    let route: string | null = null;
+    form.addEventListener('click', (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-route]');
+      if (button) route = button.dataset.route ?? null;
+    });
+
+    function say(text: string, kind: 'ok' | 'error' | '') {
+      if (!status) return;
+      status.textContent = text;
+      status.dataset.kind = kind;
+    }
+
+    /** The enquiry as the business reads it, used by both routes. */
+    function compose(data: FormData) {
+      const value = (name: string) => String(data.get(name) ?? '').trim();
+      return {
+        payload: {
+          name: value('name'),
+          mobile: value('mobile'),
+          email: value('email'),
+          service: value('service'),
+          message: value('message'),
+          website: value('website'),
+        },
+        text: [
+          `Name: ${value('name')}`,
+          `Mobile: ${value('mobile')}`,
+          value('email') ? `Email: ${value('email')}` : '',
+          value('service') ? `Service: ${value('service')}` : '',
+          value('message') ? `Details: ${value('message')}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      };
+    }
+
+    form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
       if (!form.reportValidity()) return;
 
-      const data = new FormData(form);
-      const value = (name: string) => String(data.get(name) ?? '').trim();
-
-      /*
-       * Record the enquiry before handing off.
-       *
-       * Fire-and-forget on purpose. WhatsApp opening is what the visitor is
-       * waiting for, and it must not be delayed — or prevented — by a network
-       * call to a service they never asked about. If the POST fails the
-       * enquiry still reaches the business the way it always has.
-       *
-       * keepalive so the request survives the tab navigating to WhatsApp,
-       * which is the very next thing that happens.
-       */
+      const { payload, text } = compose(new FormData(form));
       const endpoint = document.body.dataset.enquiryEndpoint;
       const siteId = document.body.dataset.siteId;
+      const canPost = Boolean(endpoint && siteId);
 
-      if (endpoint && siteId) {
-        fetch(endpoint, {
+      // Enter with no button pressed follows whichever route is primary.
+      const chosen = route ?? (form.dataset.whatsapp ? 'whatsapp' : 'email');
+      route = null;
+
+      const post = () =>
+        fetch(endpoint!, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ siteId, ...payload }),
+        });
+
+      if (chosen === 'email') {
+        /*
+         * Awaited, unlike the WhatsApp route. Nothing else happens on this
+         * path, so the response is the only thing that can tell someone their
+         * enquiry arrived — silence would read as a dead button.
+         */
+        if (!canPost) {
+          // No endpoint configured: fall back to the visitor's mail client
+          // rather than pretending to have sent something.
+          const to = form.dataset.email;
+          const subject = form.dataset.subject || 'Enquiry';
+          if (to) {
+            window.location.href =
+              `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+          } else {
+            say('Email is not set up for this site — please use WhatsApp or call us.', 'error');
+          }
+          return;
+        }
+
+        const buttons = form.querySelectorAll<HTMLButtonElement>('button[type="submit"]');
+        buttons.forEach((button) => (button.disabled = true));
+        say('Sending…', '');
+
+        try {
+          const response = await post();
+          if (!response.ok) throw new Error(String(response.status));
+          say('Thank you — your enquiry has been sent. We will be in touch shortly.', 'ok');
+          form.reset();
+        } catch {
+          say('Could not send just now. Please try WhatsApp, or call us directly.', 'error');
+        } finally {
+          buttons.forEach((button) => (button.disabled = false));
+        }
+        return;
+      }
+
+      /*
+       * WhatsApp: record in the background and hand off immediately. Opening
+       * the app is what the visitor is waiting for and must not be delayed by
+       * a call to a service they never asked about; keepalive lets the request
+       * outlive the tab navigating away.
+       */
+      if (canPost) {
+        fetch(endpoint!, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           keepalive: true,
-          body: JSON.stringify({
-            siteId,
-            name: value('name'),
-            mobile: value('mobile'),
-            email: value('email'),
-            service: value('service'),
-            message: value('message'),
-            website: value('website'),
-          }),
+          body: JSON.stringify({ siteId, ...payload }),
         }).catch(() => {
-          /* Silent: the handoff below is the path that matters to the visitor. */
+          /* Silent: the handoff below is the path that matters here. */
         });
       }
 
-      const lines = [
-        `Name: ${value('name')}`,
-        `Mobile: ${value('mobile')}`,
-        value('email') ? `Email: ${value('email')}` : '',
-        value('service') ? `Service: ${value('service')}` : '',
-        value('message') ? `Details: ${value('message')}` : '',
-      ].filter(Boolean);
-
-      const body = lines.join('\n');
       const whatsapp = form.dataset.whatsapp;
-      const email = form.dataset.email;
-      const subject = form.dataset.subject || 'Enquiry';
-
-      const target = whatsapp
-        ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(body)}`
-        : `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-      // A new tab for WhatsApp so the site is not navigated away from; mailto
-      // hands off to the OS and leaves the page where it is either way.
-      window.open(target, whatsapp ? '_blank' : '_self', 'noopener');
+      window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
     });
   });
 </script>
