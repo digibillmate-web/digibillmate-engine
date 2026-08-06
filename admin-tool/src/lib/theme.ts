@@ -6,7 +6,7 @@
  * nothing in the database knows about CSS.
  */
 
-export type TokenKind = 'color' | 'font' | 'image' | 'text' | 'number';
+export type TokenKind = 'color' | 'font' | 'image' | 'text' | 'number' | 'choice';
 
 export type TokenGroup = 'Brand' | 'Page' | 'Typography' | 'Motion' | 'Site';
 
@@ -20,6 +20,8 @@ export interface TokenSpec {
   min?: number;
   max?: number;
   step?: number;
+  /** For kind: 'choice' — value/label pairs, first being the default. */
+  options?: { value: string; label: string }[];
 }
 
 export const TOKEN_GROUPS: TokenGroup[] = [
@@ -126,6 +128,30 @@ export const THEME_TOKENS: TokenSpec[] = [
     max: 12,
     step: 0.5,
     hint: 'Seconds each hero slide and carousel card holds before the next one. Lower is faster.',
+  },
+
+  {
+    key: 'preloader',
+    label: 'Loading screen',
+    kind: 'choice',
+    group: 'Motion',
+    options: [
+      { value: '', label: 'None' },
+      { value: 'ring', label: 'Spinning ring' },
+    ],
+    hint: 'Covers the page while it loads. Clears itself even if scripts fail.',
+  },
+  {
+    key: 'cursor-glow',
+    label: 'Cursor glow',
+    kind: 'choice',
+    group: 'Motion',
+    options: [
+      { value: '', label: 'None' },
+      { value: 'soft', label: 'Soft' },
+      { value: 'strong', label: 'Strong' },
+    ],
+    hint: 'A halo trailing the mouse. Desktop only — ignored on touch screens.',
   },
 
   // --- Site ---------------------------------------------------------------

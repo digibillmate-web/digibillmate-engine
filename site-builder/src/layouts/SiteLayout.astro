@@ -48,6 +48,18 @@ const themeStyle = toDeclarations(theme);
  */
 const pageStyle = toDeclarations(pageTheme);
 
+/*
+ * Chrome effects, decided here because the theme is known at render time and
+ * CSS cannot branch on a custom property to decide whether an element exists.
+ *
+ * A page override wins, the same as colours: a stark landing page can drop the
+ * preloader the rest of the site uses.
+ */
+const effect = (key: string) => (pageTheme?.[key] ?? theme?.[key] ?? '').trim();
+
+const preloader = effect('--dbm-preloader');
+const cursorGlow = effect('--dbm-cursor-glow');
+
 ---
 
 <html lang="en">
@@ -70,6 +82,25 @@ const pageStyle = toDeclarations(pageTheme);
     data-site-id={siteId}
     data-enquiry-endpoint={enquiryEndpoint}
   >
+    {/*
+      The preloader clears itself with a CSS animation, not with script.
+      A loading screen that depends on JS to disappear is one broken bundle
+      away from a permanently blank site — the single worst failure a site can
+      have, because it hides everything and looks like an outage.
+
+      The script below only shortens it once the page is genuinely ready.
+    */}
+    {preloader === 'ring' && (
+      <div class="preload" data-preload aria-hidden="true">
+        <span class="preload__ring"></span>
+      </div>
+    )}
+
+    {/* Desktop pointers only; the CSS keeps it out of the way on touch. */}
+    {(cursorGlow === 'soft' || cursorGlow === 'strong') && (
+      <div class={`cursorglow cursorglow--${cursorGlow}`} data-cursor-glow aria-hidden="true"></div>
+    )}
+
     <main>
       <slot />
     </main>
@@ -89,6 +120,69 @@ const pageStyle = toDeclarations(pageTheme);
        *    that section would otherwise never appear again.
        */
       const root = document.documentElement;
+
+      /*
+       * Clears the loading screen once the page is actually ready.
+       *
+       * The CSS already dismisses it on a timer, so this only shortens the
+       * wait — nothing here is load-bearing, and a thrown error above or
+       * below cannot leave the screen stuck.
+       */
+      const preload = document.querySelector<HTMLElement>('[data-preload]');
+      if (preload) {
+        const clear = () => {
+          preload.classList.add('is-done');
+          // Removed outright once faded, so a full-screen element can never
+          // sit over the page swallowing clicks.
+          window.setTimeout(() => preload.remove(), 600);
+        };
+
+        if (document.readyState === 'complete') clear();
+        else window.addEventListener('load', clear, { once: true });
+
+        /*
+         * A hard ceiling. `load` waits for every image, and one slow photo on
+         * a phone connection would otherwise hold the whole page behind a
+         * spinner. Two seconds is longer than the CSS fallback, so this only
+         * ever fires when the animation is not running either.
+         */
+        window.setTimeout(clear, 2000);
+      }
+
+      /*
+       * Halo following the pointer.
+       *
+       * Positioned in a rAF rather than on every mousemove: pointer events
+       * fire far faster than the screen refreshes, and writing styles on each
+       * one makes the page feel heavier, which is the opposite of the point.
+       *
+       * It stays invisible until the pointer actually moves, so a page nobody
+       * has touched does not carry a glow parked in its top-left corner.
+       */
+      const glow = document.querySelector<HTMLElement>('[data-cursor-glow]');
+      if (glow && window.matchMedia('(pointer: fine)').matches) {
+        let x = 0;
+        let y = 0;
+        let queued = false;
+
+        const paint = () => {
+          queued = false;
+          glow.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+        };
+
+        window.addEventListener(
+          'pointermove',
+          (event) => {
+            x = event.clientX;
+            y = event.clientY;
+            glow.classList.add('is-active');
+            if (queued) return;
+            queued = true;
+            requestAnimationFrame(paint);
+          },
+          { passive: true },
+        );
+      }
 
       /**
        * Splits section headings into per-character spans so they can slide in

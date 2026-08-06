@@ -369,3 +369,120 @@ img {
   color: var(--dbm-color-text);
   border-color: var(--dbm-color-border);
 }
+
+/*
+ * Loading screen.
+ *
+ * Dismissed by a CSS animation, deliberately. A preloader that waits for
+ * script to remove it is one failed bundle away from a permanently blank
+ * site — the worst failure a page can have, because it hides everything and
+ * reads as an outage rather than a bug. This one always clears; the script
+ * only shortens it once the page is genuinely ready.
+ */
+.preload {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: var(--dbm-color-secondary);
+  animation: dbm-preload-out 0.5s ease 1.6s forwards;
+}
+
+/*
+ * The scripted dismissal, and deliberately a transition rather than an
+ * animation.
+ *
+ * An animation only reaches its end state by running, so anywhere animations
+ * are suppressed — a background tab, a throttled renderer — a preloader that
+ * relies on one stays put and covers the page. A transition sets the value
+ * immediately and merely interpolates the way there, so the screen clears
+ * whether or not the interpolation is ever drawn.
+ *
+ * That makes the two paths genuinely independent: script here, animation
+ * above, and either alone is sufficient.
+ */
+.preload.is-done {
+  animation: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+}
+
+.preload__ring {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 3px solid rgb(255 255 255 / 0.25);
+  border-top-color: var(--dbm-color-primary);
+  animation: dbm-spin 0.9s linear infinite;
+}
+
+@keyframes dbm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dbm-preload-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/*
+ * Cursor halo.
+ *
+ * Pointer-events none so it can never intercept a click, and confined to
+ * fine pointers: on a touch screen there is no cursor to follow, and the
+ * element would sit wherever the last tap landed.
+ */
+.cursorglow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 460px;
+  height: 460px;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(circle, var(--dbm-color-primary) 0%, transparent 62%);
+}
+
+.cursorglow--soft {
+  filter: blur(120px);
+}
+
+.cursorglow--strong {
+  filter: blur(80px);
+}
+
+@media (pointer: fine) {
+  .cursorglow.is-active {
+    opacity: 0.28;
+  }
+
+  .cursorglow--strong.is-active {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preload {
+    animation: dbm-preload-out 0.2s ease forwards;
+  }
+
+  .preload__ring {
+    animation: none;
+  }
+
+  /* A glow chasing the pointer is exactly the movement this setting asks to
+     stop, so it is removed rather than slowed. */
+  .cursorglow {
+    display: none;
+  }
+}

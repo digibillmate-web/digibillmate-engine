@@ -171,6 +171,21 @@ export default function ThemeForm({
                       </select>
                     )}
 
+                    {token.kind === 'choice' && token.options && (
+                      <select
+                        id={`t-${token.key}`}
+                        className="ef__input"
+                        value={raw}
+                        onChange={(e) => set(token.key, e.target.value)}
+                      >
+                        {token.options.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
                     {token.kind === 'number' && (
                       <input
                         id={`t-${token.key}`}
