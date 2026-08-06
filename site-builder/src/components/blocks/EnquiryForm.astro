@@ -395,7 +395,29 @@ const canSend = hasWhatsapp || hasEmail;
         try {
           const response = await post();
           if (!response.ok) throw new Error(String(response.status));
-          say('Thank you — your enquiry has been sent. We will be in touch shortly.', 'ok');
+
+          /*
+           * The enquiry can be recorded without the business being told: a
+           * bounced notification, a monthly cap reached, a recipient address
+           * that is wrong. Reporting that plainly is better than a thank-you
+           * that quietly is not true — it costs the visitor one message on
+           * another channel, where the alternative is silence they blame the
+           * business for.
+           */
+          const result = (await response.json().catch(() => null)) as
+            | { notified?: boolean }
+            | null;
+
+          if (result?.notified === false) {
+            say(
+              'Your enquiry is saved, but our email alert did not go through. ' +
+                'Please also message us on WhatsApp or call, so we do not miss you.',
+              'error',
+            );
+          } else {
+            say('Thank you — your enquiry has been sent. We will be in touch shortly.', 'ok');
+          }
+
           form.reset();
         } catch {
           say('Could not send just now. Please try WhatsApp, or call us directly.', 'error');
