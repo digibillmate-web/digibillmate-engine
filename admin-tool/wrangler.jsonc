@@ -41,7 +41,11 @@
   // encrypted secret nobody can read back. CLOUDFLARE_API_TOKEN is the secret
   // and is set with `wrangler secret put`.
   "vars": {
-    "CLOUDFLARE_ACCOUNT_ID": "3dd2599e471a6d14a7ee7d074ab46520"
+    "CLOUDFLARE_ACCOUNT_ID": "3dd2599e471a6d14a7ee7d074ab46520",
+
+    // Handed to every site this portal provisions, so their enquiry forms
+    // post here. A property of the platform rather than of any one site.
+    "ENQUIRY_ENDPOINT": "https://websites.digibillmate.com/api/enquiry"
   }
 
   // Secrets are NOT declared here. CLOUDFLARE_DEPLOY_HOOK_URL and

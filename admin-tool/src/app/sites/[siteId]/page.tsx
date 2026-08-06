@@ -12,6 +12,7 @@ import BlockAppearance from '@/components/BlockAppearance';
 import CollapsibleBlock from '@/components/CollapsibleBlock';
 import PageAppearance from '@/components/PageAppearance';
 import MailSettingsForm, { type MailUsage } from '@/components/MailSettingsForm';
+import ProvisionSiteForm from '@/components/ProvisionSiteForm';
 import AddBlockBar, { type CatalogEntry } from '@/components/AddBlockBar';
 import PagesManager, { type PageRow } from '@/components/PagesManager';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
@@ -84,7 +85,7 @@ export default async function SiteEditorPage({
   const { data: site } = await supabase
     .from('sites')
     .select(
-      'id, name, subdomain, status, theme, composition_linked, theme_linked, enquiry_email, enquiry_notify, enquiry_monthly_limit, archetypes(key, name, default_theme)',
+      'id, name, subdomain, status, theme, composition_linked, theme_linked, enquiry_email, enquiry_notify, enquiry_monthly_limit, pages_project, archetypes(key, name, default_theme)',
     )
     .eq('id', siteId)
     .single();
@@ -298,6 +299,11 @@ export default async function SiteEditorPage({
               siteId={siteId}
               initialName={site.name}
               initialSubdomain={site.subdomain ?? ''}
+            />
+            <ProvisionSiteForm
+              siteId={siteId}
+              suggestedName={(site.subdomain as string | null) ?? ''}
+              existingProject={(site.pages_project as string | null) ?? null}
             />
             <PublishButton
               siteId={siteId}
