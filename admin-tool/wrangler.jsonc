@@ -34,6 +34,14 @@
 
   "observability": {
     "enabled": true
+  },
+
+  // Account id is not a secret — it appears in every dashboard URL — so it
+  // lives here where it is visible and version-controlled, rather than as an
+  // encrypted secret nobody can read back. CLOUDFLARE_API_TOKEN is the secret
+  // and is set with `wrangler secret put`.
+  "vars": {
+    "CLOUDFLARE_ACCOUNT_ID": "3dd2599e471a6d14a7ee7d074ab46520"
   }
 
   // Secrets are NOT declared here. CLOUDFLARE_DEPLOY_HOOK_URL and
