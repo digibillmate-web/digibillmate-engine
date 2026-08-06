@@ -1546,3 +1546,65 @@ textarea.ef__input {
   padding: 1.25rem;
   color: var(--admin-text-muted);
 }
+
+/* --- Launch checklist ---------------------------------------------------- */
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.checklist__item {
+  display: flex;
+  gap: 0.7rem;
+  align-items: start;
+}
+
+.checklist__mark {
+  flex-shrink: 0;
+  width: 1.1rem;
+  text-align: center;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+}
+
+.checklist__item.is-done .checklist__mark {
+  color: #1a7f3c;
+}
+
+.checklist__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.checklist__label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Done items recede: the list is read for what is left, not what is finished. */
+.checklist__item.is-done .checklist__label {
+  font-weight: 500;
+  color: var(--admin-text-muted);
+}
+
+.checklist__hint {
+  font-size: 0.78rem;
+  color: var(--admin-text-muted);
+}
+
+.checklist__tag {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: #eef0f3;
+  color: var(--admin-text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

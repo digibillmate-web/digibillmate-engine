@@ -14,6 +14,7 @@ import PageAppearance from '@/components/PageAppearance';
 import MailSettingsForm, { type MailUsage } from '@/components/MailSettingsForm';
 import ProvisionSiteForm from '@/components/ProvisionSiteForm';
 import SaveAsTemplateForm, { type TemplateOption } from '@/components/SaveAsTemplateForm';
+import LaunchChecklist, { type ChecklistItem } from '@/components/LaunchChecklist';
 import AddBlockBar, { type CatalogEntry } from '@/components/AddBlockBar';
 import PagesManager, { type PageRow } from '@/components/PagesManager';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
@@ -86,7 +87,7 @@ export default async function SiteEditorPage({
   const { data: site } = await supabase
     .from('sites')
     .select(
-      'id, name, subdomain, status, theme, composition_linked, theme_linked, enquiry_email, enquiry_notify, enquiry_monthly_limit, pages_project, archetypes(key, name, default_theme)',
+      'id, name, subdomain, custom_domain, status, theme, composition_linked, theme_linked, enquiry_email, enquiry_notify, enquiry_monthly_limit, pages_project, archetypes(key, name, default_theme)',
     )
     .eq('id', siteId)
     .single();
@@ -239,6 +240,61 @@ export default async function SiteEditorPage({
     ].sort();
   }
 
+  /*
+   * Derived, never stored. A checklist someone ticks by hand is a checklist
+   * that drifts from reality; every item below is read from the site itself,
+   * so it cannot claim hosting exists when no project does.
+   */
+  const headerBlock = allBlocks.find((block) => block.block_definitions?.key === 'header_nav');
+  const headerContent = (headerBlock?.content ?? {}) as { logo_url?: string };
+
+  const checklist: ChecklistItem[] = [
+    {
+      label: 'Pages and content',
+      done: allBlocks.length > 0 && pages.length > 0,
+      hint: 'A site with no blocks builds an empty page, and the export refuses it.',
+      href: `/sites/${siteId}`,
+    },
+    {
+      label: 'Logo',
+      done: Boolean(headerContent.logo_url),
+      hint: 'Without one the header falls back to the business name as text.',
+      href: `/sites/${siteId}`,
+    },
+    {
+      label: 'Colours and fonts',
+      done: !site.theme_linked,
+      hint: 'Still using the archetype defaults, so this site looks like its template.',
+      href: `/sites/${siteId}?tab=theme`,
+    },
+    {
+      label: 'Enquiry recipient',
+      done: Boolean(site.enquiry_email) || site.enquiry_notify === false,
+      hint: 'Enquiries are recorded but nobody is told about them.',
+      href: `/sites/${siteId}?tab=mail`,
+    },
+    {
+      label: 'Cloudflare hosting',
+      done: Boolean(site.pages_project),
+      hint: 'Nothing builds this site until it has a Pages project.',
+      href: `/sites/${siteId}?tab=settings`,
+    },
+    {
+      label: 'Published',
+      done: site.status === 'published',
+      hint: 'Draft sites are not built, so changes never reach the web.',
+      href: `/sites/${siteId}?tab=settings`,
+    },
+    {
+      label: 'Custom domain',
+      // Not knowable from here: the domain may be live without this column
+      // being filled in, so it is guidance rather than a verdict.
+      done: Boolean(site.custom_domain),
+      hint: "Added in Cloudflare against this site's Pages project, using the customer's own domain.",
+      manual: true,
+    },
+  ];
+
   const tabHref = (next: Tab) =>
     next === 'content' ? `/sites/${siteId}` : `/sites/${siteId}?tab=${next}`;
 
@@ -324,6 +380,7 @@ export default async function SiteEditorPage({
 
         {active === 'settings' && (
           <>
+            <LaunchChecklist items={checklist} />
             <RenameSiteForm
               siteId={siteId}
               initialName={site.name}
