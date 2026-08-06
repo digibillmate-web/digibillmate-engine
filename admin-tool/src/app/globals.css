@@ -1428,3 +1428,44 @@ textarea.ef__input {
   color: var(--admin-text-muted);
   font-size: 0.875rem;
 }
+
+/* --- Mail settings ------------------------------------------------------ */
+
+.ef__check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+/*
+ * Usage figures. A definition list because that is what they are — a label
+ * and the number answering it — and it keeps the pairs associated when the
+ * grid wraps to one column.
+ */
+.mailusage {
+  display: grid;
+  gap: 0.9rem 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin: 0;
+}
+
+.mailusage dt {
+  font-size: 0.78rem;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mailusage dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.mailusage__cap {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--admin-text-muted);
+}

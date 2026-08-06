@@ -110,7 +110,9 @@ export async function POST(request: Request) {
 
   const { data: site } = await supabase
     .from('sites')
-    .select('id, name, subdomain, custom_domain, enquiry_email')
+    .select(
+      'id, name, subdomain, custom_domain, enquiry_email, enquiry_notify, enquiry_monthly_limit',
+    )
     .eq('id', siteId)
     .single();
 
@@ -187,12 +189,50 @@ export async function POST(request: Request) {
   }
 
   /*
+   * Whether to notify at all, before composing anything.
+   *
+   * The cap exists because one Brevo account serves every client site: a form
+   * loop or a spam run on one site would otherwise burn the whole plan's
+   * allowance and silence notifications for all the others. Reaching the cap
+   * is recorded on the row, so it shows up as a number in the admin rather
+   * than as email that quietly stopped arriving.
+   *
+   * Counted over the calendar month, matching how the sending plan is billed.
+   */
+  const monthStart = new Date();
+  monthStart.setUTCDate(1);
+  monthStart.setUTCHours(0, 0, 0, 0);
+
+  let blocked: string | null = null;
+
+  if (!site.enquiry_notify) {
+    blocked = 'Notifications are switched off for this site.';
+  } else if (!site.enquiry_email) {
+    blocked = 'No enquiry_email set for this site.';
+  } else if (site.enquiry_monthly_limit !== null) {
+    const { count: sentThisMonth } = await supabase
+      .from('enquiries')
+      .select('id', { count: 'exact', head: true })
+      .eq('site_id', site.id)
+      .eq('email_status', 'sent')
+      .gte('created_at', monthStart.toISOString());
+
+    if ((sentThisMonth ?? 0) >= site.enquiry_monthly_limit) {
+      blocked =
+        `Monthly email limit reached (${site.enquiry_monthly_limit}). ` +
+        'The enquiry is recorded; raise the limit to resume notifications.';
+    }
+  }
+
+  /*
    * Notification. Failure here is recorded against the row and reported as
    * success to the visitor: from their side the enquiry did arrive, and asking
    * them to submit again would produce a duplicate rather than a delivery.
    */
   const to = site.enquiry_email;
-  const result = to
+  const result = blocked
+    ? ({ ok: false, skipped: true, error: blocked } as const)
+    : to
     ? await sendMail({
         to,
         subject: `New enquiry — ${name}${enquiry.service ? ` (${enquiry.service})` : ''}`,

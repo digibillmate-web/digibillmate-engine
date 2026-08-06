@@ -11,6 +11,7 @@ import BlockControls from '@/components/BlockControls';
 import BlockAppearance from '@/components/BlockAppearance';
 import CollapsibleBlock from '@/components/CollapsibleBlock';
 import PageAppearance from '@/components/PageAppearance';
+import MailSettingsForm, { type MailUsage } from '@/components/MailSettingsForm';
 import AddBlockBar, { type CatalogEntry } from '@/components/AddBlockBar';
 import PagesManager, { type PageRow } from '@/components/PagesManager';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
@@ -44,7 +45,7 @@ function blockSummary(content: unknown): string | undefined {
   return undefined;
 }
 
-type Tab = 'content' | 'theme' | 'settings';
+type Tab = 'content' | 'theme' | 'mail' | 'settings';
 
 interface BlockDefinition {
   id: string;
@@ -75,14 +76,15 @@ export default async function SiteEditorPage({
 }) {
   const { siteId } = await params;
   const { tab, page: pageParam } = await searchParams;
-  const active: Tab = tab === 'theme' || tab === 'settings' ? tab : 'content';
+  const active: Tab =
+    tab === 'theme' || tab === 'settings' || tab === 'mail' ? tab : 'content';
 
   const supabase = await createClient();
 
   const { data: site } = await supabase
     .from('sites')
     .select(
-      'id, name, subdomain, status, theme, composition_linked, theme_linked, archetypes(key, name, default_theme)',
+      'id, name, subdomain, status, theme, composition_linked, theme_linked, enquiry_email, enquiry_notify, enquiry_monthly_limit, archetypes(key, name, default_theme)',
     )
     .eq('id', siteId)
     .single();
@@ -159,6 +161,54 @@ export default async function SiteEditorPage({
     Boolean(site.theme_linked),
   );
 
+  /*
+   * Usage counters, fetched only for the tab that shows them. Four head-only
+   * counts are cheaper than pulling every enquiry row back to tally in JS,
+   * and this table grows without bound.
+   */
+  let mailUsage: MailUsage = {
+    sentThisMonth: 0,
+    totalEnquiries: 0,
+    failed: 0,
+    skipped: 0,
+    lastEnquiryAt: null,
+  };
+
+  if (active === 'mail') {
+    const monthStart = new Date();
+    monthStart.setUTCDate(1);
+    monthStart.setUTCHours(0, 0, 0, 0);
+
+    function countBase() {
+      return supabase
+        .from('enquiries')
+        .select('id', { count: 'exact', head: true })
+        .eq('site_id', siteId);
+    }
+
+    const [sent, total, failed, skipped, last] = await Promise.all([
+      countBase().eq('email_status', 'sent').gte('created_at', monthStart.toISOString()),
+      countBase(),
+      countBase().eq('email_status', 'failed'),
+      countBase().eq('email_status', 'skipped'),
+      supabase
+        .from('enquiries')
+        .select('created_at')
+        .eq('site_id', siteId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    mailUsage = {
+      sentThisMonth: sent.count ?? 0,
+      totalEnquiries: total.count ?? 0,
+      failed: failed.count ?? 0,
+      skipped: skipped.count ?? 0,
+      lastEnquiryAt: (last.data?.created_at as string | undefined) ?? null,
+    };
+  }
+
   const tabHref = (next: Tab) =>
     next === 'content' ? `/sites/${siteId}` : `/sites/${siteId}?tab=${next}`;
 
@@ -198,6 +248,9 @@ export default async function SiteEditorPage({
           <Link className={`tab ${active === 'theme' ? 'is-active' : ''}`} href={tabHref('theme')}>
             Theme
           </Link>
+          <Link className={`tab ${active === 'mail' ? 'is-active' : ''}`} href={tabHref('mail')}>
+            Mail
+          </Link>
           <Link
             className={`tab ${active === 'settings' ? 'is-active' : ''}`}
             href={tabHref('settings')}
@@ -222,6 +275,20 @@ export default async function SiteEditorPage({
               site.theme,
               Boolean(site.theme_linked),
             )}
+          />
+        )}
+
+        {active === 'mail' && (
+          <MailSettingsForm
+            siteId={siteId}
+            initialEmail={(site.enquiry_email as string | null) ?? ''}
+            initialNotify={site.enquiry_notify !== false}
+            initialLimit={
+              site.enquiry_monthly_limit === null || site.enquiry_monthly_limit === undefined
+                ? ''
+                : String(site.enquiry_monthly_limit)
+            }
+            usage={mailUsage}
           />
         )}
 
