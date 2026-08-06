@@ -1,0 +1,75 @@
+---
+import type { StatsBandContent } from '../../types/blocks';
+
+type Props = StatsBandContent;
+
+const { title, intro, stats } = Astro.props;
+---
+
+<section class="stats dbm-section">
+  <div class="dbm-container">
+    {title && <h2 class="dbm-heading">{title}</h2>}
+    {intro && <p class="dbm-intro">{intro}</p>}
+
+    {/*
+      A definition list: each figure is answered by its label, and that
+      pairing is the meaning. Read as a bare row of numbers, "5000+" says
+      nothing at all.
+    */}
+    <dl class="stats__grid" data-stagger>
+      {stats.map((stat) => (
+        <div class="stats__item">
+          <dt class="stats__value">{stat.value}</dt>
+          <dd class="stats__label">
+            {stat.label}
+            {stat.note && <span class="stats__note">{stat.note}</span>}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+</section>
+
+<style>
+  .stats__grid {
+    margin: 0;
+    display: grid;
+    gap: var(--dbm-space-lg);
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    text-align: center;
+  }
+
+  .stats__item {
+    padding-inline: var(--dbm-space-sm);
+  }
+
+  .stats__value {
+    font-family: var(--dbm-font-heading);
+    /* Large enough to be the thing you see first, which is the point of
+       putting a number on a page at all. */
+    font-size: clamp(2.25rem, 5vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--dbm-color-primary);
+  }
+
+  .stats__label {
+    margin: var(--dbm-space-xs) 0 0;
+    font-weight: 600;
+    font-size: var(--dbm-text-sm);
+    letter-spacing: 0.02em;
+  }
+
+  .stats__note {
+    display: block;
+    margin-top: 0.15rem;
+    font-weight: 400;
+    color: var(--dbm-color-text-muted);
+  }
+
+  /* On a coloured band the primary figure would vanish into the background. */
+  :global(.blockbg--primary) .stats__value,
+  :global(.blockbg--secondary) .stats__value {
+    color: inherit;
+  }
+</style>

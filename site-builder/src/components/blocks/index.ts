@@ -15,6 +15,7 @@ import PageBanner from './PageBanner.astro';
 import Hero from './Hero.astro';
 import ServicesGrid from './ServicesGrid.astro';
 import WorkProcess from './WorkProcess.astro';
+import StatsBand from './StatsBand.astro';
 import CategoryList from './CategoryList.astro';
 import PricingOffers from './PricingOffers.astro';
 import BeforeAfterGallery from './BeforeAfterGallery.astro';
@@ -34,6 +35,7 @@ export const blockRegistry = {
   hero: Hero,
   services_grid: ServicesGrid,
   work_process: WorkProcess,
+  stats_band: StatsBand,
   category_list: CategoryList,
   pricing_offers: PricingOffers,
   gallery: BeforeAfterGallery,

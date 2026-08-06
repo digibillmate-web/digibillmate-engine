@@ -259,6 +259,16 @@ const CONTENT_MAPPERS = {
     })),
   }),
 
+  stats_band: (c) => ({
+    title: c.title,
+    intro: c.intro,
+    stats: (c.stats ?? []).map((stat) => ({
+      value: stat.value,
+      label: stat.label,
+      note: stat.note,
+    })),
+  }),
+
   work_process: (c) => ({
     title: c.title,
     intro: c.intro,

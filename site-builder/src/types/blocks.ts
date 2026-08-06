@@ -191,6 +191,20 @@ export interface ServicesGridContent {
   enquiryHref?: string;
 }
 
+/** stats_band */
+export interface Stat {
+  value: string;
+  label: string;
+  /** Optional qualifier under the label. */
+  note?: string;
+}
+
+export interface StatsBandContent {
+  title?: string;
+  intro?: string;
+  stats: Stat[];
+}
+
 /** work_process */
 export interface ProcessStep {
   title: string;
@@ -312,6 +326,7 @@ export type BlockContent =
   | { type: 'why_choose_us'; content: WhyChooseUsContent }
   | { type: 'hero'; content: HeroContent }
   | { type: 'services_grid'; content: ServicesGridContent }
+  | { type: 'stats_band'; content: StatsBandContent }
   | { type: 'work_process'; content: WorkProcessContent }
   | { type: 'category_list'; content: CategoryListContent }
   | { type: 'pricing_offers'; content: PricingOffersContent }
