@@ -199,6 +199,7 @@ const CONTENT_MAPPERS = {
 
   brand_logos: (c) => ({
     heading: c.title,
+    ...(c.layout === 'marquee' ? { layout: 'marquee' } : {}),
     brands: (c.brands ?? []).map((b) => ({
       name: b.name,
       ...(b.logo_url ? { logo: { src: b.logo_url, alt: b.name ?? '' } } : {}),

@@ -486,3 +486,85 @@ img {
     display: none;
   }
 }
+
+/*
+ * Ambient glow.
+ *
+ * Two large, heavily blurred blobs drifting slowly behind the page. Taken
+ * from a reference site whose premium feel comes almost entirely from this:
+ * at 550-700px with 150px of blur, nothing reads as a shape — it reads as
+ * the page having depth.
+ *
+ * Fixed rather than absolute so the colour drifts independently of scrolling.
+ * Behind everything and pointer-events none, so it can never take a click.
+ */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient__blob {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--dbm-color-primary);
+}
+
+.ambient__blob--a {
+  width: 550px;
+  height: 550px;
+  top: -180px;
+  right: -160px;
+  filter: blur(150px);
+  animation: dbm-drift-a 12s ease-in-out infinite;
+}
+
+.ambient__blob--b {
+  width: 420px;
+  height: 420px;
+  bottom: -140px;
+  left: -140px;
+  filter: blur(120px);
+  animation: dbm-drift-b 16s ease-in-out infinite;
+}
+
+/* Opacity is the whole difference between the two settings: the geometry
+   stays put so switching does not move the composition around. */
+.ambient--subtle .ambient__blob {
+  opacity: 0.1;
+}
+
+.ambient--strong .ambient__blob {
+  opacity: 0.22;
+}
+
+@keyframes dbm-drift-a {
+  50% {
+    transform: translate(30px, -40px);
+  }
+}
+
+@keyframes dbm-drift-b {
+  50% {
+    transform: translate(40px, 20px);
+  }
+}
+
+/*
+ * Content sits above the glow. Without this the blobs would wash over the
+ * page rather than sit behind it — z-index 0 alone is not enough once other
+ * elements create their own stacking contexts.
+ */
+body > main {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The colour stays, the drift stops: it is depth, not motion. */
+  .ambient__blob {
+    animation: none;
+  }
+}

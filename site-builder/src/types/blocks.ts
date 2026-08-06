@@ -90,6 +90,8 @@ export interface Brand {
 export interface BrandLogosContent {
   heading?: string;
   brands: Brand[];
+  /** 'marquee' scrolls the strip continuously. Defaults to 'grid'. */
+  layout?: 'grid' | 'marquee';
 }
 
 /** why_choose_us */

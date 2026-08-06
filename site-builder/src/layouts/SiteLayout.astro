@@ -59,6 +59,7 @@ const effect = (key: string) => (pageTheme?.[key] ?? theme?.[key] ?? '').trim();
 
 const preloader = effect('--dbm-preloader');
 const cursorGlow = effect('--dbm-cursor-glow');
+const ambientGlow = effect('--dbm-ambient-glow');
 
 ---
 
@@ -93,6 +94,20 @@ const cursorGlow = effect('--dbm-cursor-glow');
     {preloader === 'ring' && (
       <div class="preload" data-preload aria-hidden="true">
         <span class="preload__ring"></span>
+      </div>
+    )}
+
+    {/*
+      Ambient glow: two large blurred blobs drifting behind everything.
+
+      Fixed rather than per-section, so the colour moves independently of the
+      scroll and reads as depth in the page rather than as decoration bolted
+      onto one band. Behind all content and inert to the pointer.
+    */}
+    {(ambientGlow === 'subtle' || ambientGlow === 'strong') && (
+      <div class={`ambient ambient--${ambientGlow}`} aria-hidden="true">
+        <span class="ambient__blob ambient__blob--a"></span>
+        <span class="ambient__blob ambient__blob--b"></span>
       </div>
     )}
 

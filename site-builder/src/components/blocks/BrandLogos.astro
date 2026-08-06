@@ -3,27 +3,122 @@ import type { BrandLogosContent } from '../../types/blocks';
 
 type Props = BrandLogosContent;
 
-const { heading, brands } = Astro.props;
+const { heading, brands, layout = 'grid' } = Astro.props;
+
+/*
+ * A marquee scrolls a duplicated list from 0 to -50%, so the second copy
+ * arrives exactly where the first began and the loop has no seam. Building
+ * the duplicate here rather than in script means it is present in the HTML:
+ * the strip scrolls even before any JavaScript runs.
+ *
+ * The copy is hidden from assistive tech — repeating every brand name to a
+ * screen reader would be noise, not emphasis.
+ */
+const marquee = layout === 'marquee' && brands.length > 0;
+
+/*
+ * Each half must be wider than the screen, or the strip scrolls into empty
+ * space — with six logos a half measured 442px against a 1265px frame.
+ *
+ * So the list is repeated until a half is comfortably wide, and that whole
+ * half is what gets duplicated. The -50% translation then lands the copy
+ * exactly where the original began, seamlessly, whatever the brand count.
+ */
+const TARGET_ITEMS = 32;
+const repeats = marquee ? Math.max(1, Math.ceil(TARGET_ITEMS / brands.length)) : 1;
+const half = Array.from({ length: repeats }, () => brands).flat();
 ---
 
 <section class="brands dbm-section">
   <div class="dbm-container">
     {heading && <h2 class="dbm-heading brands__heading">{heading}</h2>}
-    <ul class="brands__grid" data-stagger>
-      {brands.map((brand) => (
-        <li class="brands__item dbm-surface">
-          {brand.logo
-            ? <img class="brands__logo" src={brand.logo.src} alt={brand.logo.alt || brand.name} loading="lazy" />
-            : <span class="brands__name">{brand.name}</span>}
-        </li>
-      ))}
-    </ul>
   </div>
+
+  {marquee ? (
+    <div class="marquee">
+      <div class="marquee__track">
+        {[0, 1].map((copy) => (
+          <ul class="marquee__row" aria-hidden={copy === 1 ? 'true' : undefined}>
+            {half.map((brand) => (
+              <li class="brands__item marquee__item dbm-surface">
+                {brand.logo
+                  ? <img class="brands__logo" src={brand.logo.src} alt={copy === 1 ? '' : brand.logo.alt || brand.name} loading="lazy" />
+                  : <span class="brands__name">{brand.name}</span>}
+              </li>
+            ))}
+          </ul>
+        ))}
+      </div>
+    </div>
+  ) : (
+    <div class="dbm-container">
+      <ul class="brands__grid" data-stagger>
+        {brands.map((brand) => (
+          <li class="brands__item dbm-surface">
+            {brand.logo
+              ? <img class="brands__logo" src={brand.logo.src} alt={brand.logo.alt || brand.name} loading="lazy" />
+              : <span class="brands__name">{brand.name}</span>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
 </section>
 
 <style>
   .brands {
     background: var(--dbm-color-surface);
+  }
+
+  /*
+   * Continuous strip. Overflow hidden on the frame, the track twice as wide
+   * as the visible row, translated by exactly half — the second copy lands
+   * where the first started, so the loop never shows a gap.
+   */
+  .marquee {
+    overflow: hidden;
+    width: 100%;
+    /* Fades the ends rather than cutting logos off mid-shape. */
+    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  }
+
+  .marquee__track {
+    display: flex;
+    width: max-content;
+    animation: dbm-marquee 45s linear infinite;
+  }
+
+  /* Pausing on hover lets someone actually look at a logo they recognised. */
+  .marquee:hover .marquee__track {
+    animation-play-state: paused;
+  }
+
+  .marquee__row {
+    display: flex;
+    align-items: center;
+    gap: var(--dbm-space-lg);
+    list-style: none;
+    margin: 0;
+    padding: 0 var(--dbm-space-lg) 0 0;
+  }
+
+  .marquee__item {
+    flex: 0 0 auto;
+  }
+
+  @keyframes dbm-marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* Still a strip, just not a moving one. */
+    .marquee__track {
+      animation: none;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
   }
 
   .brands__heading {

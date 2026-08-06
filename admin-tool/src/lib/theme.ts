@@ -142,6 +142,18 @@ export const THEME_TOKENS: TokenSpec[] = [
     hint: 'Covers the page while it loads. Clears itself even if scripts fail.',
   },
   {
+    key: 'ambient-glow',
+    label: 'Ambient glow',
+    kind: 'choice',
+    group: 'Motion',
+    options: [
+      { value: '', label: 'None' },
+      { value: 'subtle', label: 'Subtle' },
+      { value: 'strong', label: 'Strong' },
+    ],
+    hint: 'Large blurred colour drifting slowly behind the page. Reads as depth rather than as an effect.',
+  },
+  {
     key: 'cursor-glow',
     label: 'Cursor glow',
     kind: 'choice',
