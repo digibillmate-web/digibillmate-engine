@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { applyComposition, type TemplateComposition } from '@/lib/template-snapshot';
 
 /**
  * Site provisioning: the logic migration 0005 performed once by hand, as
@@ -70,6 +71,27 @@ export async function backfillBlockInstances(
   siteId: string,
   archetypeId: string,
 ): Promise<BackfillResult> {
+  /*
+   * A template saved from a site carries its pages; the original archetype
+   * predates pages and is a flat block list. Both paths stay: rewriting the
+   * seeded archetype would gain nothing, and the composition path is the one
+   * every new template uses.
+   */
+  const { data: archetype } = await supabase
+    .from('archetypes')
+    .select('composition')
+    .eq('id', archetypeId)
+    .single();
+
+  const composition = archetype?.composition as TemplateComposition | null;
+
+  if (composition?.pages?.length) {
+    const applied = await applyComposition(supabase, siteId, composition);
+    return applied.ok
+      ? { ok: true, inserted: applied.blocks }
+      : { ok: false, inserted: 0, error: applied.error };
+  }
+
   const { data: archetypeBlocks, error: readError } = await supabase
     .from('archetype_blocks')
     .select('block_definition_id, position, default_content')

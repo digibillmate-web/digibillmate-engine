@@ -13,6 +13,7 @@ import CollapsibleBlock from '@/components/CollapsibleBlock';
 import PageAppearance from '@/components/PageAppearance';
 import MailSettingsForm, { type MailUsage } from '@/components/MailSettingsForm';
 import ProvisionSiteForm from '@/components/ProvisionSiteForm';
+import SaveAsTemplateForm, { type TemplateOption } from '@/components/SaveAsTemplateForm';
 import AddBlockBar, { type CatalogEntry } from '@/components/AddBlockBar';
 import PagesManager, { type PageRow } from '@/components/PagesManager';
 import { schemaToFields, unmappedKeys } from '@/lib/schema-to-fields';
@@ -210,6 +211,34 @@ export default async function SiteEditorPage({
     };
   }
 
+  /*
+   * Existing templates and their industries, so saving one offers what is
+   * already there rather than inviting the same trade to be typed three ways.
+   */
+  let templateOptions: TemplateOption[] = [];
+  let industries: string[] = [];
+
+  if (active === 'settings') {
+    const { data: allArchetypes } = await supabase
+      .from('archetypes')
+      .select('id, name, industry')
+      .order('name');
+
+    templateOptions = (allArchetypes ?? []).map((row) => ({
+      id: row.id as string,
+      name: row.name as string,
+      industry: (row.industry as string | null) ?? null,
+    }));
+
+    industries = [
+      ...new Set(
+        templateOptions
+          .map((template) => template.industry?.trim())
+          .filter((value): value is string => Boolean(value)),
+      ),
+    ].sort();
+  }
+
   const tabHref = (next: Tab) =>
     next === 'content' ? `/sites/${siteId}` : `/sites/${siteId}?tab=${next}`;
 
@@ -311,6 +340,12 @@ export default async function SiteEditorPage({
               hasDeployHook={Boolean(hook?.url)}
             />
             <DeployHookForm siteId={siteId} initialUrl={hook?.url ?? ''} />
+            <SaveAsTemplateForm
+              siteId={siteId}
+              siteName={site.name as string}
+              industries={industries}
+              templates={templateOptions}
+            />
           </>
         )}
 
