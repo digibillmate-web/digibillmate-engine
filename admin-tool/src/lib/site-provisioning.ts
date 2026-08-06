@@ -17,6 +17,49 @@ export interface BackfillResult {
 }
 
 /**
+ * Ensures a site has a home page, and returns its id.
+ *
+ * Every block belongs to a page: migration 0011 introduced site_pages and made
+ * block_instances.page_id NOT NULL, backfilling a home page for the sites that
+ * existed at the time. Site creation was never taught to do the same, so both
+ * creating and cloning a site have been failing on that constraint ever since
+ * — invisible while there was only one site, fatal the moment a second was
+ * wanted.
+ *
+ * The home page is the one page a site cannot do without: an empty slug is
+ * what builds to index.html, and the export refuses a site without it.
+ */
+export async function ensureHomePage(
+  supabase: SupabaseClient,
+  siteId: string,
+): Promise<{ ok: boolean; pageId?: string; error?: string }> {
+  const { data: existing, error: readError } = await supabase
+    .from('site_pages')
+    .select('id')
+    .eq('site_id', siteId)
+    .eq('slug', '')
+    .maybeSingle();
+
+  if (readError) {
+    return { ok: false, error: `Could not read site pages: ${readError.message}` };
+  }
+
+  if (existing?.id) return { ok: true, pageId: existing.id as string };
+
+  const { data: created, error: insertError } = await supabase
+    .from('site_pages')
+    .insert({ site_id: siteId, slug: '', title: 'Home', position: 1, show_in_nav: true })
+    .select('id')
+    .single();
+
+  if (insertError || !created) {
+    return { ok: false, error: `Could not create the home page: ${insertError?.message}` };
+  }
+
+  return { ok: true, pageId: created.id as string };
+}
+
+/**
  * Copies an archetype's blocks into a site as block_instances.
  *
  * Idempotent in the same way 0005 was: positions the site already has are
@@ -56,10 +99,15 @@ export async function backfillBlockInstances(
 
   const taken = new Set((existing ?? []).map((row) => row.position as number));
 
+  // Blocks cannot exist without a page to sit on.
+  const home = await ensureHomePage(supabase, siteId);
+  if (!home.ok) return { ok: false, inserted: 0, error: home.error };
+
   const rows = archetypeBlocks
     .filter((block) => !taken.has(block.position as number))
     .map((block) => ({
       site_id: siteId,
+      page_id: home.pageId,
       block_definition_id: block.block_definition_id,
       position: block.position,
       content: block.default_content ?? {},
