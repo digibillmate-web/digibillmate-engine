@@ -25,7 +25,14 @@ export type MailResult =
 const BREVO_ENDPOINT = 'https://api.brevo.com/v3/smtp/email';
 
 export async function sendMail(message: MailMessage): Promise<MailResult> {
-  const key = process.env.BREVO_API_KEY;
+  /*
+   * BREVO_API_KEYS, plural, matching the secret already stored in Cloudflare.
+   * Cloudflare never shows a secret's value again once set, so renaming it
+   * would mean re-entering a key nobody can read back — the code moves to the
+   * name instead. Singular is still accepted so a future rename is a rename,
+   * not an outage.
+   */
+  const key = process.env.BREVO_API_KEYS ?? process.env.BREVO_API_KEY;
   const from = process.env.MAIL_FROM;
 
   /*
@@ -37,7 +44,7 @@ export async function sendMail(message: MailMessage): Promise<MailResult> {
     return {
       ok: false,
       skipped: true,
-      error: 'Mail is not configured (BREVO_API_KEY / MAIL_FROM).',
+      error: 'Mail is not configured (BREVO_API_KEYS / MAIL_FROM).',
     };
   }
 
