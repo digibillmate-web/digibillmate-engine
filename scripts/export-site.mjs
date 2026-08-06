@@ -258,6 +258,32 @@ const CONTENT_MAPPERS = {
     })),
   }),
 
+  work_process: (c) => ({
+    title: c.title,
+    intro: c.intro,
+    steps: (c.steps ?? []).map((step) => ({
+      title: step.title,
+      description: step.description,
+      icon: step.icon,
+    })),
+  }),
+
+  category_list: (c) => ({
+    title: c.title,
+    intro: c.intro,
+    categories: (c.categories ?? []).map((category) => ({
+      title: category.title,
+      icon: category.icon,
+      ...(category.image_url
+        ? { image: { src: category.image_url, alt: category.title ?? '' } }
+        : {}),
+      items: (category.items ?? []).map((item) => ({
+        label: item.label,
+        note: item.note,
+      })),
+    })),
+  }),
+
   pricing_offers: (c) => ({
     heading: c.title,
     offers: (c.offers ?? []).map((o) => ({

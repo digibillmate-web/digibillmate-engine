@@ -39,3 +39,8 @@ logs/
 
 # Local one-off data scripts
 _*.mjs
+
+# Reference sites dropped in for mapping. Source material, not part of the
+# engine: blocks we lack get built here, the original stays out of the repo.
+/Bhavisha-Home-Care-main/
+/reference-sites/

@@ -14,6 +14,8 @@ import EnquiryForm from './EnquiryForm.astro';
 import PageBanner from './PageBanner.astro';
 import Hero from './Hero.astro';
 import ServicesGrid from './ServicesGrid.astro';
+import WorkProcess from './WorkProcess.astro';
+import CategoryList from './CategoryList.astro';
 import PricingOffers from './PricingOffers.astro';
 import BeforeAfterGallery from './BeforeAfterGallery.astro';
 import Testimonials from './Testimonials.astro';
@@ -31,6 +33,8 @@ export const blockRegistry = {
   page_banner: PageBanner,
   hero: Hero,
   services_grid: ServicesGrid,
+  work_process: WorkProcess,
+  category_list: CategoryList,
   pricing_offers: PricingOffers,
   gallery: BeforeAfterGallery,
   testimonials: Testimonials,

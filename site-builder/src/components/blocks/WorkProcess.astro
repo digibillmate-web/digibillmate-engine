@@ -1,0 +1,139 @@
+---
+import type { WorkProcessContent } from '../../types/blocks';
+
+type Props = WorkProcessContent;
+
+const { title, intro, steps } = Astro.props;
+
+/*
+ * The connecting line only makes sense while every step is on one row. With
+ * an auto-fitting grid the last step of each row grows a line pointing at
+ * empty space, which reads as a missing step rather than a wrapped one.
+ *
+ * So the column count is the step count, decided here where it is known, and
+ * the line is drawn only when they all fit. Beyond five the steps stack and
+ * the numbers carry the sequence on their own.
+ */
+const MAX_IN_ROW = 5;
+const singleRow = steps.length <= MAX_IN_ROW;
+---
+
+<section class="process dbm-section" id="process">
+  <div class="dbm-container">
+    <h2 class="dbm-heading">{title}</h2>
+    {intro && <p class="dbm-intro">{intro}</p>}
+
+    {/*
+      An ordered list because the order is the meaning: these steps happen in
+      sequence, and a screen reader should say so rather than read them as an
+      unordered set of features.
+    */}
+    <ol
+      class="process__steps"
+      class:list={[{ 'process__steps--linked': singleRow }]}
+      style={`--process-cols: ${Math.min(steps.length, MAX_IN_ROW)}`}
+      data-stagger
+    >
+      {steps.map((step) => (
+        <li class="process__step">
+          <span class="process__marker" aria-hidden="true">
+            {step.icon ? <span class="process__icon">{step.icon}</span> : null}
+          </span>
+
+          <div class="process__body">
+            <h3 class="process__title">{step.title}</h3>
+            {step.description && <p class="process__desc">{step.description}</p>}
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+
+<style>
+  .process__steps {
+    list-style: none;
+    /* Numbers come from a counter, not from the markup: the list stays an <ol>
+       for meaning, while the visible number is styled as part of the design. */
+    counter-reset: step;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--dbm-space-lg);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  /* One row, so the connectors below join steps rather than trail off. */
+  @media (min-width: 900px) {
+    .process__steps {
+      grid-template-columns: repeat(var(--process-cols), 1fr);
+    }
+  }
+
+  .process__step {
+    counter-increment: step;
+    position: relative;
+    text-align: center;
+    padding-inline: var(--dbm-space-sm);
+  }
+
+  .process__marker {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--dbm-space-sm);
+    border-radius: 50%;
+    background: var(--dbm-color-primary);
+    color: var(--dbm-color-primary-contrast);
+    font-family: var(--dbm-font-heading);
+    font-size: var(--dbm-text-xl);
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+  }
+
+  .process__marker::before {
+    content: counter(step);
+  }
+
+  /* An icon replaces the number rather than crowding it. */
+  .process__icon {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: inherit;
+    border-radius: 50%;
+    font-size: var(--dbm-text-xl);
+  }
+
+  /*
+   * The connecting line. Drawn from each step to the next rather than as one
+   * bar behind them, so it stops at the last step instead of trailing off the
+   * end of the row.
+   */
+  @media (min-width: 900px) {
+    .process__steps--linked .process__step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 32px;
+      left: calc(50% + 40px);
+      width: calc(100% - 80px);
+      height: 2px;
+      background: var(--dbm-color-border);
+    }
+  }
+
+  .process__title {
+    font-family: var(--dbm-font-heading);
+    font-size: var(--dbm-text-lg);
+    margin: 0 0 var(--dbm-space-xs);
+  }
+
+  .process__desc {
+    margin: 0;
+    color: var(--dbm-color-text-muted);
+    font-size: var(--dbm-text-sm);
+  }
+</style>

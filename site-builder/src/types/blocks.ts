@@ -189,6 +189,40 @@ export interface ServicesGridContent {
   enquiryHref?: string;
 }
 
+/** work_process */
+export interface ProcessStep {
+  title: string;
+  description?: string;
+  /** Icon slug or emoji; the step number is drawn either way. */
+  icon?: string;
+}
+
+export interface WorkProcessContent {
+  title: string;
+  intro?: string;
+  steps: ProcessStep[];
+}
+
+/** category_list */
+export interface CategoryItem {
+  label: string;
+  /** Secondary line — a price, a lead time, a qualifier. */
+  note?: string;
+}
+
+export interface Category {
+  title: string;
+  icon?: string;
+  image?: Image;
+  items: CategoryItem[];
+}
+
+export interface CategoryListContent {
+  title: string;
+  intro?: string;
+  categories: Category[];
+}
+
 /** pricing_offers */
 export interface Offer {
   name: string;
@@ -276,6 +310,8 @@ export type BlockContent =
   | { type: 'why_choose_us'; content: WhyChooseUsContent }
   | { type: 'hero'; content: HeroContent }
   | { type: 'services_grid'; content: ServicesGridContent }
+  | { type: 'work_process'; content: WorkProcessContent }
+  | { type: 'category_list'; content: CategoryListContent }
   | { type: 'pricing_offers'; content: PricingOffersContent }
   | { type: 'gallery'; content: BeforeAfterGalleryContent }
   | { type: 'testimonials'; content: TestimonialsContent }

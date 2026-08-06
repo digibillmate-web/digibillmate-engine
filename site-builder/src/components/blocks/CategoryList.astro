@@ -1,0 +1,138 @@
+---
+import type { CategoryListContent } from '../../types/blocks';
+
+type Props = CategoryListContent;
+
+const { title, intro, categories } = Astro.props;
+---
+
+<section class="catlist dbm-section" id="categories">
+  <div class="dbm-container">
+    <h2 class="dbm-heading">{title}</h2>
+    {intro && <p class="dbm-intro">{intro}</p>}
+
+    <div class="catlist__grid" data-stagger>
+      {categories.map((category) => (
+        <article class="catlist__card dbm-surface">
+          {category.image ? (
+            <div class="catlist__media">
+              <img
+                src={category.image.src}
+                alt={category.image.alt || category.title}
+                loading="lazy"
+              />
+            </div>
+          ) : category.icon ? (
+            <span class="catlist__icon" aria-hidden="true">{category.icon}</span>
+          ) : null}
+
+          <h3 class="catlist__title">{category.title}</h3>
+
+          {/*
+            The items are a list, not prose: someone is scanning for their own
+            fault or dish, and a paragraph would make them read everything.
+          */}
+          {category.items.length > 0 && (
+            <ul class="catlist__items">
+              {category.items.map((item) => (
+                <li class="catlist__item">
+                  <span class="catlist__label">{item.label}</span>
+                  {item.note && <span class="catlist__note">{item.note}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .catlist__grid {
+    display: grid;
+    gap: var(--dbm-space-md);
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .catlist__card {
+    display: flex;
+    flex-direction: column;
+    /* Full height so cards in a row line up regardless of how many items
+       each category happens to carry. */
+    height: 100%;
+    padding: var(--dbm-space-lg);
+    background: var(--dbm-color-background);
+    border: 1px solid var(--dbm-color-border);
+    border-radius: var(--dbm-radius-md);
+    box-shadow: var(--dbm-shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .catlist__card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--dbm-shadow-md);
+  }
+
+  .catlist__media img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: var(--dbm-radius-sm);
+    margin-bottom: var(--dbm-space-sm);
+  }
+
+  .catlist__icon {
+    display: inline-grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: var(--dbm-space-sm);
+    border-radius: 50%;
+    background: var(--dbm-color-primary);
+    color: var(--dbm-color-primary-contrast);
+    font-size: var(--dbm-text-lg);
+  }
+
+  .catlist__title {
+    font-family: var(--dbm-font-heading);
+    font-size: var(--dbm-text-lg);
+    margin: 0 0 var(--dbm-space-sm);
+  }
+
+  .catlist__items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--dbm-space-xs);
+  }
+
+  .catlist__item {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--dbm-space-sm);
+    align-items: baseline;
+    padding-block: 0.35em;
+    border-bottom: 1px solid var(--dbm-color-border);
+    font-size: var(--dbm-text-sm);
+  }
+
+  .catlist__item:last-child {
+    border-bottom: 0;
+  }
+
+  .catlist__note {
+    flex-shrink: 0;
+    color: var(--dbm-color-primary);
+    font-weight: 700;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .catlist__card,
+    .catlist__card:hover {
+      transition: none;
+      transform: none;
+    }
+  }
+</style>
