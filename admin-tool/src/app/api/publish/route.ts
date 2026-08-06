@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { triggerDeployment } from '@/lib/cloudflare';
 
 /**
  * Triggers a Cloudflare Pages deploy for one site.
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
 
   const { data: site, error: siteError } = await supabase
     .from('sites')
-    .select('id, name, subdomain, status')
+    .select('id, name, subdomain, status, pages_project')
     .eq('id', siteId)
     .single();
 
@@ -63,6 +64,50 @@ export async function POST(request: Request) {
       { ok: false, error: 'Site not found, or not visible to your account.' },
       { status: 404 },
     );
+  }
+
+  /*
+   * Publishing means two things, and doing only the second is why a draft
+   * could never go live from here: the build refuses anything not marked
+   * published, but nothing in the portal could mark it. So the status is
+   * moved first, then the deploy is triggered.
+   */
+  if (site.status !== 'published') {
+    const { error: statusError } = await supabase
+      .from('sites')
+      .update({ status: 'published' })
+      .eq('id', siteId);
+
+    if (statusError) {
+      return NextResponse.json(
+        { ok: false, error: `Could not mark the site published: ${statusError.message}` },
+        { status: 500 },
+      );
+    }
+  }
+
+  /*
+   * A provisioned site deploys through the API, using the project name it
+   * already knows. Deploy hooks predate that: they had to be created by hand,
+   * copied, and stored, and each could only ever build the one project it was
+   * made for. The hook path stays for sites provisioned before this existed.
+   */
+  if (site.pages_project) {
+    const deployment = await triggerDeployment(site.pages_project);
+
+    if (!deployment.ok) {
+      return NextResponse.json(
+        { ok: false, error: `Cloudflare rejected the deploy: ${deployment.error}` },
+        { status: 502 },
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      deployId: deployment.data?.id ?? null,
+      triggeredAt: new Date().toISOString(),
+      note: 'Deploy queued at Cloudflare. Build status is not reported back here.',
+    });
   }
 
   // Read under the caller's own session: site_deploy_hooks has an admin-only

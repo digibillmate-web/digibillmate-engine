@@ -395,6 +395,7 @@ export default async function SiteEditorPage({
               siteId={siteId}
               siteStatus={site.status}
               hasDeployHook={Boolean(hook?.url)}
+              hasPagesProject={Boolean(site.pages_project)}
             />
             <DeployHookForm siteId={siteId} initialUrl={hook?.url ?? ''} />
             <SaveAsTemplateForm

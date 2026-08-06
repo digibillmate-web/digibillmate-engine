@@ -19,11 +19,14 @@ export default function PublishButton({
   siteId,
   siteStatus,
   hasDeployHook,
+  hasPagesProject,
 }: {
   siteId: string;
   siteStatus: string;
   /** Whether sites.deploy_hook_url is set. Without it there is nowhere to publish. */
   hasDeployHook: boolean;
+  /** Provisioned sites deploy through the Cloudflare API and need no hook. */
+  hasPagesProject: boolean;
 }) {
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
 
@@ -64,6 +67,12 @@ export default function PublishButton({
     }
   }
 
+  /*
+   * Either route can deploy: the API for provisioned sites, a hook for the
+   * ones that predate provisioning.
+   */
+  const canDeploy = hasPagesProject || hasDeployHook;
+
   return (
     <div className="publish">
       <div className="publish__row">
@@ -71,28 +80,22 @@ export default function PublishButton({
           className="btn btn--primary"
           type="button"
           onClick={publish}
-          disabled={status.kind === 'triggering' || !hasDeployHook}
+          disabled={status.kind === 'triggering' || !canDeploy}
         >
           {status.kind === 'triggering' ? 'Triggering…' : 'Publish'}
         </button>
 
         <span className="publish__hint">
-          Rebuilds the site from saved content and deploys it.
+          {notPublished
+            ? 'Marks the site published, rebuilds it from saved content and deploys.'
+            : 'Rebuilds the site from saved content and deploys it.'}
         </span>
       </div>
 
-      {!hasDeployHook && (
+      {!canDeploy && (
         <p className="publish__warn">
-          No deploy hook set for this site. Create its Cloudflare Pages project, then save the
-          hook to <code>sites.deploy_hook_url</code> — each site needs its own, because a hook
-          cannot be told which site to build.
-        </p>
-      )}
-
-      {notPublished && (
-        <p className="publish__warn">
-          This site&apos;s status is <strong>{siteStatus}</strong>. The build refuses anything
-          that is not <code>published</code>, so the deploy will fail until you change it.
+          Nothing builds this site yet. Create its Cloudflare project under Hosting above —
+          a provisioned site deploys straight from here, with no deploy hook to copy.
         </p>
       )}
 
